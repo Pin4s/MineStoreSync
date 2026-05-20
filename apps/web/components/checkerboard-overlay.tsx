@@ -108,7 +108,7 @@ export const CheckerboardOverlay = forwardRef<
       phase === "covering" &&
       blocks.length > 0 &&
       !coveredCalledRef.current &&
-      visibleBlocks.size >= Math.ceil(blocks.length * 0.75)
+      visibleBlocks.size >= Math.ceil(blocks.length * 0.90)
     ) {
       coveredCalledRef.current = true;
       onCovered?.();
