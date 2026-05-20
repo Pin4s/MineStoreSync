@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 export function Navbar() {
   const pathname = usePathname();
   const hideAuthButtons = pathname === "/cadastrar";
+  
 
   return (
     <header className="border-b border-[#163a16] bg-black shadow-[0_1px_0_rgba(34,197,94,0.18)]">
@@ -31,7 +32,9 @@ export function Navbar() {
             </span>
           </div>
         </Link>
-        {hideAuthButtons ? (
+
+        {/* Momentaneamente comentado pra facilitar o desenvolvimento */}
+        {/* {hideAuthButtons ? (
           <div className="flex items-center gap-3">
             <Button
               type="button"
@@ -46,7 +49,7 @@ export function Navbar() {
               Cadastrar
             </Button>
           </div>
-        ) : null}
+        ) : null} */}
       </div>
     </header>
   );
