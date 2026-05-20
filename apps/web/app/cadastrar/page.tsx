@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Chrome, Github, Lock, Mail, User } from "lucide-react";
 
+import { MeshBackground } from "@/components/mesh-background";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -46,15 +47,7 @@ export default function RegisterPage() {
 
   return (
     <main className="relative overflow-hidden bg-[#050505] text-[#dcfce7]">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(134,239,172,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(134,239,172,0.9) 1px, transparent 1px)",
-          backgroundSize: "42px 42px"
-        }}
-      />
+      <MeshBackground />
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(163,230,53,0.12),transparent_22%)]"
