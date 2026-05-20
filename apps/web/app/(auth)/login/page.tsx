@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Chrome, Github, Lock, Mail, User } from "lucide-react";
+import { Chrome, Github, Lock, Mail } from "lucide-react";
 
-import { MeshBackground } from "@/components/mesh-background";
+import { useAuthTransitionContext } from "@/contexts/auth-transition-context";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -23,19 +21,20 @@ const floatingGlyphs = Array.from({ length: 18 }, (_, index) => ({
 }));
 
 const telemetryLines = [
-  "[INFO] Conectando ao servidor...",
-  "[OK] Autenticacao disponivel",
+  "[INFO] Verificando credenciais...",
+  "[OK] Sessao disponivel",
   "[INFO] MineStoreSync v1.0.0",
-  "[SYNC] wallet.minecraft.balance",
-  "[AUTH] handshake terminal://register",
-  "[CACHE] profile-seed loaded"
+  "[SYNC] wallet.session.restore",
+  "[AUTH] handshake terminal://login",
+  "[CACHE] vault-snapshot loaded"
 ];
 
 const inputClassName =
   "h-12 rounded-none border border-[#22c55e]/40 bg-[#0a0a0a] pl-11 font-[family:var(--font-jetbrains-mono)] text-sm text-[#dcfce7] placeholder:text-[#3f5c46] shadow-[inset_0_0_0_1px_rgba(6,20,8,0.9)] transition-[border-color,box-shadow,color] duration-150 focus-visible:border-[#4ade80] focus-visible:ring-0 focus-visible:shadow-[0_0_0_1px_rgba(74,222,128,0.65),0_0_10px_rgba(34,197,94,0.35)]";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const [activeTelemetry, setActiveTelemetry] = useState(0);
+  const { isTransitioning, navigateTo } = useAuthTransitionContext();
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -46,8 +45,7 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <main className="relative overflow-hidden bg-[#050505] text-[#dcfce7]">
-      <MeshBackground />
+    <main className="relative overflow-hidden text-[#dcfce7]">
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.16),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(163,230,53,0.12),transparent_22%)]"
@@ -71,72 +69,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-7xl items-center px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid w-full items-center gap-12 lg:grid-cols-[1.08fr_0.92fr]">
-          <section className="space-y-8">
-            <div className="inline-flex items-center gap-3 border border-[#1a4a1a] bg-[#071107]/90 px-3 py-2 text-[11px] uppercase tracking-[0.32em] text-[#86efac] shadow-[0_0_22px_rgba(34,197,94,0.08)]">
-              <span className="h-2 w-2 bg-[#22c55e]" />
-              terminal://finance.minecraft
-            </div>
-
-            <div className="space-y-5">
-              <p className="text-xs uppercase tracking-[0.4em] text-[#4d7458]">
-                Register node :: secure onboarding
-              </p>
-              <div className="space-y-4">
-                <h1
-                  className="glitch-title font-[family:var(--font-share-tech-mono)] text-5xl uppercase tracking-[0.18em] text-[#f0fdf4] sm:text-6xl"
-                  data-text="Criar conta"
-                >
-                  Criar conta
-                </h1>
-                <p className="max-w-xl text-sm leading-7 text-[#89a88f] sm:text-base">
-                  Abra sua carteira operacional no ecossistema MineStoreSync com uma interface
-                  que mistura grid de terminal, blocos de inventario e telemetria financeira em
-                  tempo real.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Latency</p>
-                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#4ade80]">
-                  24ms
-                </p>
-              </div>
-              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Wallets</p>
-                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#67e8f9]">
-                  128k
-                </p>
-              </div>
-              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Assets</p>
-                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#bef264]">
-                  $MSS
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 border border-[#1a4a1a] bg-[#050805]/80 p-5 shadow-[0_0_24px_rgba(34,197,94,0.08)]">
-              <p className="text-[11px] uppercase tracking-[0.35em] text-[#4d7458]">
-                bootstrap.log
-              </p>
-              <div className="space-y-3 text-sm text-[#9ac4a4]">
-                <p>
-                  <span className="text-[#4ade80]">$</span> init user-profile --world=overworld
-                </p>
-                <p>
-                  <span className="text-[#67e8f9]">&gt;</span> secure vault bindings enabled
-                </p>
-                <p>
-                  <span className="text-[#bef264]">#</span> oauth providers mapped to inventory
-                  slots
-                </p>
-              </div>
-            </div>
-          </section>
-
+        <div className="grid w-full items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
           <section className="relative">
             <div className="absolute -inset-4 bg-[radial-gradient(circle,rgba(34,197,94,0.12),transparent_65%)] blur-2xl" />
             <div className="relative border border-[#1a4a1a] bg-[#050805]/95 shadow-[0_0_0_1px_rgba(20,83,45,0.9),0_0_30px_rgba(34,197,94,0.14)]">
@@ -147,18 +80,18 @@ export default function RegisterPage() {
                   <span className="h-3 w-3 rounded-full bg-[#4ade80]" />
                 </div>
                 <p className="terminal-command text-[11px] uppercase tracking-[0.3em] text-[#7fc78f]">
-                  &gt; minecraft-store --register
+                  &gt; minecraft-store --login
                 </p>
               </div>
 
               <div className="p-6 sm:p-8">
                 <div className="mb-8 space-y-3">
                   <p className="text-[11px] uppercase tracking-[0.4em] text-[#4d7458]">
-                    secure identity channel
+                    access identity channel
                   </p>
                   <p className="text-sm leading-7 text-[#81a088]">
-                    Preencha seus dados para provisionar acesso a transacoes, inventario e
-                    rotinas administrativas.
+                    Autentique suas credenciais para acessar transacoes, inventario e seu painel
+                    operacional.
                   </p>
                 </div>
 
@@ -192,19 +125,6 @@ export default function RegisterPage() {
                 <form className="space-y-5">
                   <div className="space-y-2">
                     <Label
-                      htmlFor="full-name"
-                      className="text-[11px] uppercase tracking-[0.34em] text-[#86efac]"
-                    >
-                      Nome completo
-                    </Label>
-                    <div className="group relative">
-                      <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="full-name" placeholder="Seu Nome" className={inputClassName} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
                       htmlFor="email"
                       className="text-[11px] uppercase tracking-[0.34em] text-[#86efac]"
                     >
@@ -234,58 +154,100 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="confirm-password"
-                      className="text-[11px] uppercase tracking-[0.34em] text-[#86efac]"
+                  <div className="flex justify-end -mt-2">
+                    <a
+                      href="#"
+                      className="font-[family:var(--font-jetbrains-mono)] text-[11px] text-[#4d7458] hover:text-[#4ade80] uppercase tracking-[0.28em]"
                     >
-                      Confirmar senha
-                    </Label>
-                    <div className="group relative">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="confirm-password" type="password" className={inputClassName} />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 pt-1">
-                    <Checkbox
-                      id="terms"
-                      className="mt-0.5 rounded-none border-[#2f6d2f] bg-[#0a0a0a] focus-visible:ring-[#22c55e] focus-visible:ring-offset-[#050805] checked:border-[#22c55e] checked:bg-[#22c55e]"
-                    />
-                    <Label
-                      htmlFor="terms"
-                      className="text-sm font-normal leading-6 text-[#81a088]"
-                    >
-                      Aceito os{" "}
-                      <Link href="#" className="font-medium text-[#4ade80] hover:text-[#86efac]">
-                        termos de uso
-                      </Link>{" "}
-                      e{" "}
-                      <Link href="#" className="font-medium text-[#67e8f9] hover:text-[#a5f3fc]">
-                        politica de privacidade
-                      </Link>
-                    </Label>
+                      &gt; recuperar acesso
+                    </a>
                   </div>
 
                   <Button
                     type="submit"
                     className="register-button relative h-12 w-full overflow-hidden rounded-none border border-[#4ade80] bg-[#22c55e] font-[family:var(--font-jetbrains-mono)] text-sm font-bold uppercase tracking-[0.32em] text-[#031404] hover:bg-[#4ade80]"
                   >
-                    $ Criar conta
+                    $ Entrar
                   </Button>
                 </form>
+              </div>
+            </div>
+
+            <p className="relative mx-auto mt-8 w-full px-4 text-center text-sm text-[#6f8f77] sm:px-6 lg:px-8">
+              Nao tem uma conta?{" "}
+              <button
+                type="button"
+                disabled={isTransitioning}
+                onClick={() => navigateTo("/cadastrar")}
+                className="login-link relative font-medium text-[#4ade80] cursor-pointer disabled:cursor-default disabled:opacity-70"
+              >
+                Criar conta
+              </button>
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <div className="inline-flex items-center gap-3 border border-[#1a4a1a] bg-[#071107]/90 px-3 py-2 text-[11px] uppercase tracking-[0.32em] text-[#86efac] shadow-[0_0_22px_rgba(34,197,94,0.08)]">
+              <span className="h-2 w-2 bg-[#22c55e]" />
+              terminal://session.restore
+            </div>
+
+            <div className="space-y-5">
+              <p className="text-xs uppercase tracking-[0.4em] text-[#4d7458]">
+                Auth node :: secure access
+              </p>
+              <div className="space-y-4">
+                <h1
+                  className="glitch-title font-[family:var(--font-share-tech-mono)] text-5xl uppercase tracking-[0.18em] text-[#f0fdf4] sm:text-6xl"
+                  data-text="Bem-vindo"
+                >
+                  Bem-vindo
+                </h1>
+                <p className="max-w-xl text-sm leading-7 text-[#89a88f] sm:text-base">
+                  Reconnecte sua carteira operacional e retome acesso a transacoes, historico de
+                  inventario e rotinas administrativas em tempo real.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Sessions</p>
+                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#4ade80]">
+                  3.2k
+                </p>
+              </div>
+              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Uptime</p>
+                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#67e8f9]">
+                  99.9%
+                </p>
+              </div>
+              <div className="border border-[#1a4a1a] bg-[#050805]/90 p-4 shadow-[0_0_18px_rgba(34,197,94,0.08)]">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-[#4d7458]">Nodes</p>
+                <p className="mt-3 font-[family:var(--font-share-tech-mono)] text-3xl text-[#bef264]">
+                  Active
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 border border-[#1a4a1a] bg-[#050805]/80 p-5 shadow-[0_0_24px_rgba(34,197,94,0.08)]">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-[#4d7458]">session.log</p>
+              <div className="space-y-3 text-sm text-[#9ac4a4]">
+                <p>
+                  <span className="text-[#4ade80]">$</span> auth --resume-session --verify
+                </p>
+                <p>
+                  <span className="text-[#67e8f9]">&gt;</span> token refresh available
+                </p>
+                <p>
+                  <span className="text-[#bef264]">#</span> vault snapshot: restored
+                </p>
               </div>
             </div>
           </section>
         </div>
       </div>
-
-      <p className="relative mx-auto -mt-4 w-full max-w-7xl px-4 pb-12 text-center text-sm text-[#6f8f77] sm:px-6 lg:px-8">
-        Ja tem uma conta?{" "}
-        <Link href="#" className="login-link relative font-medium text-[#4ade80]">
-          Fazer login
-        </Link>
-      </p>
 
       <div className="fixed bottom-5 right-5 hidden w-[320px] overflow-hidden border border-[#143414] bg-[#040604]/85 p-4 text-xs text-[#6f9779] shadow-[0_0_18px_rgba(34,197,94,0.08)] backdrop-blur-[2px] lg:block">
         <div className="space-y-2 font-[family:var(--font-jetbrains-mono)]">
