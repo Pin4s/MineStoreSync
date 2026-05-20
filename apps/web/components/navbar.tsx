@@ -31,7 +31,7 @@ export function Navbar() {
             </span>
           </div>
         </Link>
-        {!hideAuthButtons ? (
+        {hideAuthButtons ? (
           <div className="flex items-center gap-3">
             <Button
               type="button"
