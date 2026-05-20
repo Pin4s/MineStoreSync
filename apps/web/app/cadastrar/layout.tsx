@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Navbar } from "../../components/navbar";
+import { jetBrainsMono, shareTechMono } from "@/lib/fonts";
 
 type RegisterLayoutProps = Readonly<{
   children: ReactNode;
@@ -8,7 +9,9 @@ type RegisterLayoutProps = Readonly<{
 
 export default function RegisterLayout({ children }: RegisterLayoutProps) {
   return (
-    <div className="min-h-screen bg-[#0d0f18] text-white">
+    <div
+      className={`${jetBrainsMono.variable} ${shareTechMono.variable} min-h-screen bg-[#050505] font-[family:var(--font-jetbrains-mono)] text-white`}
+    >
       <Navbar />
       {children}
     </div>
