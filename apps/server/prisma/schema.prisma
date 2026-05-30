@@ -1,32 +1,35 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
   passwordHash String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  integration  Integration?
-  automations  Automation[]
+  integration Integration?
+  automations Automation[]
 }
 
 model Integration {
-  id                     String   @id @default(cuid())
-  userId                 String   @unique
-  rconHost               String
-  rconPort               Int
-  rconPasswordEncrypted  String
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  rconHost                  String
+  rconPort                  Int
+  rconPasswordEncrypted     String
   centralCartTokenEncrypted String
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  webhookSecretEncrypted    String?
+  webhookToken              String   @unique @default(cuid())
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -38,32 +41,32 @@ enum ConditionType {
 }
 
 model Automation {
-  id              String        @id @default(cuid())
-  userId          String
-  name            String
-  conditionType   ConditionType
-  conditionValue  Json
-  command         String
-  active          Boolean       @default(true)
+  id             String        @id @default(cuid())
+  userId         String
+  name           String
+  conditionType  ConditionType
+  conditionValue Json
+  command        String
+  active         Boolean       @default(true)
 
-  currentValue    Decimal?       
-  periodStart     DateTime?      
-  lastTriggeredAt DateTime?      
+  currentValue    Decimal?
+  periodStart     DateTime?
+  lastTriggeredAt DateTime?
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs AutomationLog[]
 }
 
 model AutomationLog {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   automationId    String
   commandExecuted String
   success         Boolean
   errorMessage    String?
-  triggeredAt     DateTime  @default(now())
+  triggeredAt     DateTime @default(now())
 
   automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 }
