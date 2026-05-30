@@ -32,12 +32,18 @@ export class PrismaIntegrationRepository implements IntegrationRepository {
         rconHost: true,
         rconPort: true,
         webhookToken: true,
+        updatedAt: true,
+        centralCartTokenEncrypted: true,
       },
     });
 
     if (!integration) return null;
 
-    return { ...integration, hasConfig: true };
+    return {
+      ...integration,
+      hasConfig: true,
+      hasCentralCartToken: Boolean(integration.centralCartTokenEncrypted),
+    };
   }
 
   async findCredentialsByUserId(userId: string): Promise<IntegrationCredentials | null> {

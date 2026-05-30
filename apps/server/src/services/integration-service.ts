@@ -32,7 +32,11 @@ export class IntegrationService {
     const integration = await this.integrationRepository.findByUserId(userId);
 
     return {
+      connected: integration?.hasConfig ?? false,
       hasConfig: integration?.hasConfig ?? false,
+      storeName: "CentralCart",
+      tokenStatus: integration?.hasCentralCartToken ? "valid" : "missing",
+      lastCheckedAt: integration?.updatedAt.toISOString() ?? null,
       rconHost: integration?.rconHost ?? null,
       rconPort: integration?.rconPort ?? null,
       webhookUrl: integration

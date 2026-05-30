@@ -22,6 +22,8 @@ export interface IntegrationRepository {
     rconPort: number;
     hasConfig: boolean;
     webhookToken: string;
+    updatedAt: Date;
+    hasCentralCartToken: boolean;
   } | null>;
   findCredentialsByUserId(userId: string): Promise<IntegrationCredentials | null>;
   findByWebhookToken(token: string): Promise<(IntegrationCredentials & { userId: string }) | null>;

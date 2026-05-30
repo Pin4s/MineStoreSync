@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Chrome, Github, Lock, Mail } from "lucide-react";
 
 import { useAuthTransitionContext } from "@/contexts/auth-transition-context";
@@ -8,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { loginUser } from "@/lib/api";
+import { persistAuthToken } from "@/lib/auth";
 
 const matrixGlyphs = ["\u00A7", "\u2593", "\u2591", "\u2592", "\u2588", "$", "\u20BF", "\u00A5"];
 
@@ -34,7 +37,17 @@ const inputClassName =
 
 export default function LoginPage() {
   const [activeTelemetry, setActiveTelemetry] = useState(0);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<{
+    tone: "success" | "warning";
+    title: string;
+    description: string;
+  } | null>(null);
   const { isTransitioning, navigateTo } = useAuthTransitionContext();
+  const router = useRouter();
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -43,6 +56,77 @@ export default function LoginPage() {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("registered") === "1") {
+      setFeedbackMessage({
+        tone: "success",
+        title: "Cadastro concluído",
+        description: "Sua conta foi criada. Faça login para acessar a dashboard."
+      });
+      return;
+    }
+
+    if (params.get("session") === "expired") {
+      setFeedbackMessage({
+        tone: "warning",
+        title: "Sessão expirada",
+        description: "Faça login novamente para continuar."
+      });
+      return;
+    }
+
+    if (params.get("session") === "missing") {
+      setFeedbackMessage({
+        tone: "warning",
+        title: "Autenticação necessária",
+        description: "Entre com sua conta para acessar o dashboard."
+      });
+      return;
+    }
+
+    if (params.get("loggedOut") === "1") {
+      setFeedbackMessage({
+        tone: "success",
+        title: "Sessão encerrada",
+        description: "Você saiu com sucesso."
+      });
+      return;
+    }
+
+    setFeedbackMessage(null);
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail || !password) {
+      setFormError("Preencha email e senha para continuar.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await loginUser({ email: normalizedEmail, password });
+      persistAuthToken(response.token);
+      router.replace("/dashboard");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Não foi possível fazer login.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const feedbackClassName =
+    feedbackMessage?.tone === "success"
+      ? "border-[#1a4a1a] bg-[#0d1710] text-[#b7f7c9]"
+      : "border-[#4a3d1a] bg-[#171209] text-[#fde68a]";
 
   return (
     <main className="relative overflow-hidden text-[#dcfce7]">
@@ -122,7 +206,23 @@ export default function LoginPage() {
                   <Separator className="flex-1 bg-[#163a16]" />
                 </div>
 
-                <form className="space-y-5">
+                {feedbackMessage ? (
+                  <div className={`${feedbackClassName} mb-5 border px-4 py-3`}>
+                    <p className="text-[11px] uppercase tracking-[0.28em]">{feedbackMessage.title}</p>
+                    <p className="mt-2 text-sm leading-6">{feedbackMessage.description}</p>
+                  </div>
+                ) : null}
+
+                {formError ? (
+                  <div
+                    className="mb-5 border border-[#4a1a1a] bg-[#170909] px-4 py-3 text-sm leading-6 text-[#fca5a5]"
+                    role="alert"
+                  >
+                    {formError}
+                  </div>
+                ) : null}
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
@@ -137,6 +237,10 @@ export default function LoginPage() {
                         type="email"
                         placeholder="seu@email.com"
                         className={inputClassName}
+                        autoComplete="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
@@ -150,7 +254,15 @@ export default function LoginPage() {
                     </Label>
                     <div className="group relative">
                       <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="password" type="password" className={inputClassName} />
+                      <Input
+                        id="password"
+                        type="password"
+                        className={inputClassName}
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        disabled={isSubmitting}
+                      />
                     </div>
                   </div>
 
@@ -165,9 +277,10 @@ export default function LoginPage() {
 
                   <Button
                     type="submit"
+                    disabled={isSubmitting}
                     className="register-button relative h-12 w-full overflow-hidden rounded-none border border-[#4ade80] bg-[#22c55e] font-[family:var(--font-jetbrains-mono)] text-sm font-bold uppercase tracking-[0.32em] text-[#031404] hover:bg-[#4ade80]"
                   >
-                    $ Entrar
+                    {isSubmitting ? "$ Entrando..." : "$ Entrar"}
                   </Button>
                 </form>
               </div>

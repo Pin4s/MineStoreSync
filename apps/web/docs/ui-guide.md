@@ -296,3 +296,4 @@ Em seguida descreva o componente ou tela desejada.
 ---
 
 *Última atualização: setup inicial — tela de cadastro como referência canônica.*
+

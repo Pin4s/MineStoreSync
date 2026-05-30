@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 
+import { jetBrainsMono, shareTechMono } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Web",
-  description: "Web app"
+  title: {
+    default: "MineStoreSync",
+    template: "%s | MineStoreSync"
+  },
+  description: "Painel operacional do MineStoreSync"
 };
 
 type RootLayoutProps = Readonly<{
@@ -13,8 +17,14 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body>{children}</body>
+    <html
+      lang="pt-BR"
+      className={`${jetBrainsMono.variable} ${shareTechMono.variable} dark`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen bg-[#050505] font-[family:var(--font-jetbrains-mono)] text-[#f0f0f0] antialiased">
+        {children}
+      </body>
     </html>
   );
 }

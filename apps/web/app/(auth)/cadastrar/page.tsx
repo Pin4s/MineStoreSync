@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Chrome, Github, Lock, Mail, User } from "lucide-react";
 
 import { useAuthTransitionContext } from "@/contexts/auth-transition-context";
@@ -10,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { registerUser } from "@/lib/api";
+import { persistAuthToken } from "@/lib/auth";
 
 const matrixGlyphs = ["\u00A7", "\u2593", "\u2591", "\u2592", "\u2588", "$", "\u20BF", "\u00A5"];
 
@@ -36,7 +39,15 @@ const inputClassName =
 
 export default function RegisterPage() {
   const [activeTelemetry, setActiveTelemetry] = useState(0);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isTransitioning, navigateTo } = useAuthTransitionContext();
+  const router = useRouter();
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -45,6 +56,61 @@ export default function RegisterPage() {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim();
+
+    if (!normalizedName || !normalizedEmail || !password || !confirmPassword) {
+      setFormError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (!normalizedEmail.includes("@")) {
+      setFormError("Informe um email válido.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setFormError("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setFormError("A confirmação de senha não confere.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setFormError("Aceite os termos para continuar.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await registerUser({
+        name: normalizedName,
+        email: normalizedEmail,
+        password
+      });
+
+      if (response.token) {
+        persistAuthToken(response.token);
+        router.replace("/dashboard");
+        return;
+      }
+
+      router.push("/login?registered=1");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Não foi possível criar a conta.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <main className="relative overflow-hidden text-[#dcfce7]">
@@ -189,7 +255,16 @@ export default function RegisterPage() {
                   <Separator className="flex-1 bg-[#163a16]" />
                 </div>
 
-                <form className="space-y-5">
+                {formError ? (
+                  <div
+                    className="mb-5 border border-[#4a1a1a] bg-[#170909] px-4 py-3 text-sm leading-6 text-[#fca5a5]"
+                    role="alert"
+                  >
+                    {formError}
+                  </div>
+                ) : null}
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
                   <div className="space-y-2">
                     <Label
                       htmlFor="full-name"
@@ -199,7 +274,15 @@ export default function RegisterPage() {
                     </Label>
                     <div className="group relative">
                       <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="full-name" placeholder="Seu Nome" className={inputClassName} />
+                      <Input
+                        id="full-name"
+                        placeholder="Seu Nome"
+                        className={inputClassName}
+                        autoComplete="name"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        disabled={isSubmitting}
+                      />
                     </div>
                   </div>
 
@@ -217,6 +300,10 @@ export default function RegisterPage() {
                         type="email"
                         placeholder="seu@email.com"
                         className={inputClassName}
+                        autoComplete="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
@@ -230,7 +317,15 @@ export default function RegisterPage() {
                     </Label>
                     <div className="group relative">
                       <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="password" type="password" className={inputClassName} />
+                      <Input
+                        id="password"
+                        type="password"
+                        className={inputClassName}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        disabled={isSubmitting}
+                      />
                     </div>
                   </div>
 
@@ -243,13 +338,24 @@ export default function RegisterPage() {
                     </Label>
                     <div className="group relative">
                       <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4d7458] transition-colors duration-150 group-focus-within:text-[#4ade80]" />
-                      <Input id="confirm-password" type="password" className={inputClassName} />
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        className={inputClassName}
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        disabled={isSubmitting}
+                      />
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3 pt-1">
                     <Checkbox
                       id="terms"
+                      checked={acceptedTerms}
+                      onChange={(event) => setAcceptedTerms(event.target.checked)}
+                      disabled={isSubmitting}
                       className="mt-0.5 rounded-none border-[#2f6d2f] bg-[#0a0a0a] focus-visible:ring-[#22c55e] focus-visible:ring-offset-[#050805] checked:border-[#22c55e] checked:bg-[#22c55e]"
                     />
                     <Label
@@ -269,9 +375,10 @@ export default function RegisterPage() {
 
                   <Button
                     type="submit"
+                    disabled={isSubmitting}
                     className="register-button relative h-12 w-full overflow-hidden rounded-none border border-[#4ade80] bg-[#22c55e] font-[family:var(--font-jetbrains-mono)] text-sm font-bold uppercase tracking-[0.32em] text-[#031404] hover:bg-[#4ade80]"
                   >
-                    $ Criar conta
+                    {isSubmitting ? "$ Criando conta..." : "$ Criar conta"}
                   </Button>
                 </form>
               </div>
