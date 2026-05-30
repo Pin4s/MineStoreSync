@@ -16,6 +16,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   integration Integration?
+  knownBuyers KnownBuyer[]
   automations Automation[]
 }
 
@@ -38,6 +39,22 @@ enum ConditionType {
   SALES_GOAL
   FIRST_SALE_OF_DAY
   MONTHLY_TOP_BUYER
+  MONTHLY_REVENUE_GOAL
+  DAILY_REVENUE_GOAL
+  PRODUCT_SALES_GOAL
+  NEW_BUYER
+  HIGH_VALUE_ORDER
+}
+
+model KnownBuyer {
+  id               String   @id @default(cuid())
+  userId           String
+  clientIdentifier String
+  firstPurchaseAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientIdentifier])
 }
 
 model Automation {
