@@ -48,6 +48,22 @@ export type ProfileResponse = {
   };
 };
 
+export type IntegrationsStatusResponse = {
+  hasConfig?: boolean;
+  rconHost?: string | null;
+  rconPort?: number | null;
+  webhookUrl?: string | null;
+  hasApiToken?: boolean;
+};
+
+export type SaveIntegrationsPayload = {
+  rconHost?: string;
+  rconPort?: number;
+  rconPassword?: string;
+  centralCartToken?: string;
+  webhookSecret?: string;
+};
+
 type ApiRequestOptions = {
   requireAuth?: boolean;
 };
@@ -100,7 +116,17 @@ export async function apiRequest<T>(
     throw new ApiError(await extractErrorMessage(response), response.status);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return undefined as T;
+  }
+
+  return JSON.parse(responseText) as T;
 }
 
 export function registerUser(payload: RegisterPayload) {
@@ -129,6 +155,17 @@ export function getCurrentUser() {
 
 export function getIntegrationStatus<T>() {
   return apiRequest<T>("/integrations/status", undefined, { requireAuth: true });
+}
+
+export function saveIntegrations<T = unknown>(payload: SaveIntegrationsPayload) {
+  return apiRequest<T>(
+    "/integrations",
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    },
+    { requireAuth: true }
+  );
 }
 
 export function getAutomations<T>() {
