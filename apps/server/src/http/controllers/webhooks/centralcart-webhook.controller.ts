@@ -50,12 +50,13 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
         return reply.status(401).send({ message: "Invalid signature." });
     }
 
-    reply.status(200).send({ received: true });
-
+    
     const { event, data } = request.body as { event: string; data: OrderApprovedData };
-
+    
     if (event === "ORDER_APPROVED") {
         const engine = new AutomationEngineService();
         await engine.processOrderApproved(integration.userId, data);
     }
+    
+    reply.status(200).send({ received: true });
 }

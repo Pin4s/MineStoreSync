@@ -21,6 +21,16 @@ export const app = Fastify({
   },
 })
 
+app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
+  try {
+    const rawBody = body.toString()
+    req.rawBody = rawBody;
+    done(null, JSON.parse(body as string));
+  } catch (e) {
+    done(e as Error, undefined);
+  }
+});
+
 app.register(cors);
 app.register(jwt, {
   secret: env.JWT_SECRET
