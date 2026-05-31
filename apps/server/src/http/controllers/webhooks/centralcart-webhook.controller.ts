@@ -32,6 +32,16 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
     const timestamp = request.headers["x-centralcart-timestamp"] as string;
     const signature = request.headers["x-centralcart-signature"] as string;
 
+    // LOG TEMPORÁRIO — remover depois
+    console.log("=== WEBHOOK RECEBIDO ===")
+    console.log("timestamp raw:", timestamp)
+    console.log("timestamp como número:", Number(timestamp))
+    console.log("timestamp * 1000:", Number(timestamp) * 1000)
+    console.log("Date.now():", Date.now())
+    console.log("signature:", signature)
+    console.log("body raw:", request.rawBody)
+    console.log("========================")
+
     if (!timestamp || !signature) {
         return reply.status(401).send({ message: "Missing security headers." });
     }
