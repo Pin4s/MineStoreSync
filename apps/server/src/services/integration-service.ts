@@ -7,7 +7,6 @@ interface SaveIntegrationRequest {
   rconPort: number;
   rconPassword: string;
   centralCartToken: string;
-  webhookSecret?: string;
 }
 
 export class IntegrationService {
@@ -20,12 +19,13 @@ export class IntegrationService {
       rconPort: data.rconPort,
       rconPasswordEncrypted: encrypt(data.rconPassword),
       centralCartTokenEncrypted: encrypt(data.centralCartToken),
-      ...(data.webhookSecret && {
-        webhookSecretEncrypted: encrypt(data.webhookSecret),
-      }),
     });
 
     return { webhookToken: result.webhookToken };
+  }
+
+  async updateWebhookSecret(userId: string, webhookSecret: string): Promise<void> {
+    await this.integrationRepository.updateWebhookSecret(userId, encrypt(webhookSecret));
   }
 
   async getStatus(userId: string) {

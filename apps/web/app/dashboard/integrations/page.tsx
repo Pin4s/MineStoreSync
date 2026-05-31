@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Lock, Server, Webhook, Store, Copy, Check, RefreshCw, ChevronRight } from "lucide-react";
+import { getStoredAuthToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,7 +25,7 @@ type FeedbackMessage = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getAuthHeader() {
-  const token = localStorage.getItem("token");
+  const token = getStoredAuthToken();
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 

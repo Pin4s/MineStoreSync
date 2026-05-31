@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { Trash2, Zap, ZapOff, ChevronDown } from "lucide-react";
 
 import { ApiError } from "@/lib/api";
-import { clearStoredAuthToken } from "@/lib/auth";
+import { clearStoredAuthToken, getStoredAuthToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 function getAuthHeader() {
-  const token = localStorage.getItem("token");
+  const token = getStoredAuthToken();
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 

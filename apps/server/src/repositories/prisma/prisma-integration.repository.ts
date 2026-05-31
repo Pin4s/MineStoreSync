@@ -25,6 +25,13 @@ export class PrismaIntegrationRepository implements IntegrationRepository {
     return { webhookToken: integration.webhookToken };
   }
 
+  async updateWebhookSecret(userId: string, webhookSecretEncrypted: string): Promise<void> {
+    await prisma.integration.update({
+      where: { userId },
+      data: { webhookSecretEncrypted },
+    });
+  }
+
   async findByUserId(userId: string) {
     const integration = await prisma.integration.findUnique({
       where: { userId },

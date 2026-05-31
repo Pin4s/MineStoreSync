@@ -17,6 +17,7 @@ export interface IntegrationCredentials {
 
 export interface IntegrationRepository {
   upsert(data: CreateIntegrationDTO): Promise<{ webhookToken: string }>;
+  updateWebhookSecret(userId: string, webhookSecretEncrypted: string): Promise<void>;
   findByUserId(userId: string): Promise<{
     rconHost: string;
     rconPort: number;

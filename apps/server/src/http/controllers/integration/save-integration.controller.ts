@@ -9,7 +9,6 @@ export async function saveIntegration(request: FastifyRequest, reply: FastifyRep
     rconPort: z.number().int().min(1).max(65535),
     rconPassword: z.string().min(1),
     centralCartToken: z.string().min(1),
-    webhookSecret: z.string().min(1).optional(),
   });
 
   const body = bodySchema.parse(request.body);
