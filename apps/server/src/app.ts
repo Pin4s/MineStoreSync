@@ -31,7 +31,7 @@ app.get("/health", async () => {
 });
 
 // Registro de rotas 
-app.register(userRoutes)
+app.register(userRoutes, { prefix: "/users" })
 app.register(integrationRoutes, { prefix: "/integrations" });
 app.register(webhookRoutes, { prefix: "/webhooks" });
 app.register(automationRoutes, { prefix: "/automations" });
