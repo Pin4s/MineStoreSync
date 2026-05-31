@@ -56,6 +56,13 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
         .update(`${timestamp}.${request.rawBody}`)
         .digest("hex");
 
+    // LOG TEMPORARIO - remover depois
+    console.log("secret descriptografado:", secret);
+    console.log("string assinada:", `${timestamp}.${request.rawBody}`);
+    console.log("expected:", expected);
+    console.log("received:", signature);
+    console.log("batem?", signature === expected);
+
     if (signature !== expected) {
         return reply.status(401).send({ message: "Invalid signature." });
     }
