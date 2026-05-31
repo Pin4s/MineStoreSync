@@ -91,7 +91,7 @@ function buildSections(): SectionDef[] {
       content: (
         <>
           <P>O MineStoreSync conecta sua loja da CentralCart ao seu servidor Minecraft. Quando alguém compra algo na loja, o sistema detecta a venda e executa automaticamente um comando no servidor — sem que você precise fazer nada.</P>
-          <P>Pensa assim: você configura uma regra que diz "quando as vendas do mês baterem R$1.000, faça um anúncio no servidor". A partir daí, o sistema cuida de tudo.</P>
+          <P>Pensa assim: você configura uma regra que diz &quot;quando as vendas do mês baterem R$1.000, faça um anúncio no servidor&quot;. A partir daí, o sistema cuida de tudo.</P>
           <Note type="tip">Você não precisa estar online no servidor para que as automações funcionem. Elas rodam em segundo plano, 24 horas por dia.</Note>
         </>
       ),
