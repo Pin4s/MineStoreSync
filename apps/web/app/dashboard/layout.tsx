@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 type DashboardLayoutProps = Readonly<{
   children: ReactNode;
@@ -16,5 +17,5 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect("/login?session=missing");
   }
 
-  return children;
+  return <DashboardShell>{children}</DashboardShell>;
 }
