@@ -43,20 +43,20 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
 
     const secret = decrypt(integration.webhookSecretEncrypted);
     const expected = createHmac("sha256", secret)
-        .update(`${timestamp}.${JSON.stringify(request.body)}`)
+        .update(`${timestamp}.${request.rawBody}`)
         .digest("hex");
 
     if (signature !== expected) {
         return reply.status(401).send({ message: "Invalid signature." });
     }
 
-    
+
     const { event, data } = request.body as { event: string; data: OrderApprovedData };
-    
+
     if (event === "ORDER_APPROVED") {
         const engine = new AutomationEngineService();
         await engine.processOrderApproved(integration.userId, data);
     }
-    
+
     reply.status(200).send({ received: true });
 }
