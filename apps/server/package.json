@@ -1,11 +1,10 @@
 {
   "name": "@repo/server",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src/server.ts --format esm --clean --out-dir dist",
-    "start": "node dist/server.js",
+    "build": "tsup src/server.ts --format cjs --clean --out-dir dist",
+    "start": "node dist/server.cjs",
     "lint": "eslint . --max-warnings=0",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate"
