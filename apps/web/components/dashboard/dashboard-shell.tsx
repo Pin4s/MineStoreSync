@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { clearStoredAuthToken } from "@/lib/auth";
 import { useIntegrationStatus } from "@/hooks/use-integration-status";
 
 const sidebarItems = [
   { id: "dashboard", label: "Início", href: "/dashboard" },
   { id: "integrations", label: "Configuração", href: "/dashboard/integrations" },
   { id: "automations", label: "Automações", href: "/dashboard/automations" },
-  { id: "guia", label: "Ajuda", href: "/dashboard/guia" },
+  { id: "guia", label: "Ajuda", href: "/dashboard/guia" }
 ];
 
 function getActiveItem(pathname: string): string {
@@ -23,26 +24,29 @@ function getActiveItem(pathname: string): string {
 }
 
 export function DashboardShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { integration, loading } = useIntegrationStatus();
 
   const activeItem = getActiveItem(pathname);
 
+  function handleLogout() {
+    clearStoredAuthToken();
+    router.replace("/login?loggedOut=1");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050505] text-[#f0f0f0]">
-      {/* Background grid */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 blueprint-grid opacity-80"
       />
-      {/* Background glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.06),transparent_28%)]"
       />
 
-      {/* Sidebar persistente */}
       <DashboardSidebar
         items={sidebarItems}
         activeItem={activeItem}
@@ -52,9 +56,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         onOpen={() => setSidebarOpen(true)}
         onClose={() => setSidebarOpen(false)}
         onSelect={() => setSidebarOpen(false)}
+        onLogout={handleLogout}
       />
 
-      {/* Conteúdo — margem esquerda compensa sidebar fixa */}
       <div className="relative z-10 lg:pl-[272px]">
         <div className="mx-auto max-w-[1600px] px-4 pb-10 pt-20 sm:px-6 lg:px-8 lg:pt-8">
           {children}

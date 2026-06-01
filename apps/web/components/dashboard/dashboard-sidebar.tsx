@@ -3,8 +3,8 @@
 import { Menu, X } from "lucide-react";
 
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { cn } from "@/lib/utils";
 import { getTokenStatusLabel, type IntegrationStatus } from "@/lib/dashboard";
+import { cn } from "@/lib/utils";
 
 type SidebarItem = {
   id: string;
@@ -21,6 +21,7 @@ type DashboardSidebarProps = {
   onOpen: () => void;
   onClose: () => void;
   onSelect: (itemId: string) => void;
+  onLogout: () => void;
 };
 
 function getConnectionTone(integration: IntegrationStatus | null) {
@@ -51,7 +52,8 @@ export function DashboardSidebar({
   isOpen,
   onOpen,
   onClose,
-  onSelect
+  onSelect,
+  onLogout
 }: DashboardSidebarProps) {
   return (
     <>
@@ -120,7 +122,7 @@ export function DashboardSidebar({
           ) : (
             <div className="mt-4 grid gap-2">
               <StatusBadge tone={getConnectionTone(integration)}>
-                {integration?.connected ? "Conectado" : "Desconectado"}
+                {integration?.connected ? "Conectado" : "Pendente"}
               </StatusBadge>
               <StatusBadge tone={getTokenTone(integration)}>
                 {getTokenStatusLabel(integration?.tokenStatus ?? "missing")}
@@ -142,7 +144,7 @@ export function DashboardSidebar({
                   onClose();
                 }}
                 className={cn(
-                  "block border px-3 py-3 text-sm uppercase tracking-[0.22em] transition-colors duration-75",
+                  "block border px-3 py-3 text-sm font-medium transition-colors duration-75",
                   active
                     ? "border-[#1a4a1a] bg-[#0d1710] text-[#86efac]"
                     : "border-transparent text-[#6b7280] hover:border-[#112411] hover:bg-[#090d09] hover:text-[#f0f0f0]"
@@ -153,6 +155,16 @@ export function DashboardSidebar({
             );
           })}
         </nav>
+
+        <div className="mt-auto pt-6">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="block w-full border border-[#3a1616] bg-[#0a0a0a] px-3 py-3 text-left text-sm text-[#fca5a5] transition-colors duration-75 hover:border-[#ef4444] hover:bg-[#150909] hover:text-[#fee2e2]"
+          >
+            Sair
+          </button>
+        </div>
       </aside>
     </>
   );
