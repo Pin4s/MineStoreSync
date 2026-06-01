@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/dashboard/status-badge";
 import {
   formatFriendlyDate,
   formatRelativeDate,
   getTokenStatusLabel,
   type IntegrationStatus
 } from "@/lib/dashboard";
-import { StatusBadge } from "@/components/dashboard/status-badge";
 
 type IntegrationStatusCardProps = {
   status: IntegrationStatus | null;
@@ -70,17 +70,17 @@ export function IntegrationStatusCard({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <p className="text-[11px] uppercase tracking-[0.34em] text-[#ef4444]">
-              integration.error
+              configuration.error
             </p>
             <h2 className="font-[family:var(--font-share-tech-mono)] text-2xl text-[#f0f0f0]">
-              Não foi possível carregar a integração
+              Não foi possível carregar a configuração
             </h2>
             <p className="max-w-2xl text-sm leading-6 text-[#6b7280]">{error}</p>
           </div>
           <Button
             type="button"
             onClick={onRetry}
-            className="h-11 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-xs font-bold uppercase tracking-[0.24em] text-[#031404] hover:bg-[#16a34a]"
+            className="h-11 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-sm font-semibold text-[#031404] hover:bg-[#16a34a]"
           >
             Tentar novamente
           </Button>
@@ -102,16 +102,16 @@ export function IntegrationStatusCard({
           <span className="h-3 w-3 rounded-full bg-[#22c55e]" />
         </div>
         <p className="terminal-cursor text-[11px] uppercase tracking-[0.3em] text-[#86efac]">
-          integration.status
+          configuration.status
         </p>
       </div>
 
       <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)]">
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-[#86efac]">Integração</p>
+            <p className="text-[11px] uppercase tracking-[0.34em] text-[#86efac]">Configuração</p>
             <h2 className="font-[family:var(--font-share-tech-mono)] text-3xl text-[#f0f0f0]">
-              {status.connected ? "Conectado" : "Desconectado"}
+              {status.connected ? "Conectado" : "Pendente"}
             </h2>
             <p className="text-sm leading-6 text-[#6b7280]">
               Loja conectada:{" "}
@@ -131,7 +131,7 @@ export function IntegrationStatusCard({
 
           {!status.connected ? (
             <div className="border border-[#4a1a1a] bg-[#140808] px-4 py-3 text-sm text-[#fca5a5]">
-              A execução das automações depende de uma integração ativa com a CentralCart.
+              As automações dependem de uma configuração ativa com a CentralCart e o servidor.
             </div>
           ) : null}
         </div>
@@ -141,7 +141,7 @@ export function IntegrationStatusCard({
             <p className="text-[10px] uppercase tracking-[0.32em] text-[#6b7280]">Conexão</p>
             <div className="mt-3">
               <StatusBadge tone={getConnectionTone(status.connected)}>
-                {status.connected ? "Conectado" : "Desconectado"}
+                {status.connected ? "Conectado" : "Pendente"}
               </StatusBadge>
             </div>
           </div>
@@ -159,9 +159,9 @@ export function IntegrationStatusCard({
             type="button"
             variant="outline"
             onClick={onOpenSettings}
-            className="h-11 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-4 font-[family:var(--font-jetbrains-mono)] text-xs font-semibold uppercase tracking-[0.24em] text-[#86efac] shadow-none transition-colors duration-75 hover:border-[#22c55e] hover:bg-[#111611] hover:text-[#f0fdf4]"
+            className="h-11 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-4 font-[family:var(--font-jetbrains-mono)] text-sm font-semibold text-[#86efac] shadow-none transition-colors duration-75 hover:border-[#22c55e] hover:bg-[#111611] hover:text-[#f0fdf4]"
           >
-            &gt; Configurar integração
+            Ver configuração
           </Button>
         </div>
       </div>
