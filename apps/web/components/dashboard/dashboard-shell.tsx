@@ -8,10 +8,10 @@ import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { useIntegrationStatus } from "@/hooks/use-integration-status";
 
 const sidebarItems = [
-  { id: "dashboard",    label: "Dashboard",   href: "/dashboard" },
-  { id: "automations",  label: "Automações",  href: "/dashboard/automations" },
-  { id: "integrations", label: "Integração",  href: "/dashboard/integrations" },
-  { id: "guia",         label: "Guia",        href: "/dashboard/guia" },
+  { id: "dashboard", label: "Início", href: "/dashboard" },
+  { id: "integrations", label: "Configuração", href: "/dashboard/integrations" },
+  { id: "automations", label: "Automações", href: "/dashboard/automations" },
+  { id: "guia", label: "Ajuda", href: "/dashboard/guia" },
 ];
 
 function getActiveItem(pathname: string): string {
