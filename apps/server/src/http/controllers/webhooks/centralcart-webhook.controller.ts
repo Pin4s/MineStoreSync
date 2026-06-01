@@ -21,6 +21,13 @@ interface OrderApprovedData {
 export async function centralCartWebhook(request: FastifyRequest, reply: FastifyReply) {
     const { webhookToken } = request.params as { webhookToken: string };
 
+    // LOG TEMPORARIO - remover depois
+    console.log("HEADERS COMPLETOS:", JSON.stringify(request.headers, null, 2));
+    console.log("RAW BODY:", request.rawBody);
+
+    // TEMPORARIO: aceita tudo para capturar dados reais
+    return reply.status(200).send({ received: true });
+
     const integration = await prisma.integration.findUnique({
         where: { webhookToken },
     });
