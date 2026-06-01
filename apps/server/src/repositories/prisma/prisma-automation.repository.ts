@@ -25,6 +25,9 @@ export class PrismaAutomationRepository implements AutomationRepository {
   }
 
   async delete(id: string) {
-    await prisma.automation.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.automationLog.deleteMany({ where: { automationId: id } }),
+      prisma.automation.delete({ where: { id } })
+    ]);
   }
 }
