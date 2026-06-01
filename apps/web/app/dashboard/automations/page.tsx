@@ -14,6 +14,15 @@ function getAuthHeader() {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
+async function getErrorMessage(response: Response) {
+  try {
+    const payload = (await response.json()) as { message?: string };
+    return payload.message ?? "Falha ao excluir automação.";
+  } catch {
+    return "Falha ao excluir automação.";
+  }
+}
+
 type ConditionType =
   | "SALES_GOAL"
   | "MONTHLY_REVENUE_GOAL"
@@ -460,6 +469,10 @@ export default function AutomationsPage() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [listFeedback, setListFeedback] = useState<{
+    type: "ok" | "error" | "warn";
+    text: string;
+  } | null>(null);
   const mountedRef = useRef(true);
   const router = useRouter();
 
@@ -497,10 +510,33 @@ export default function AutomationsPage() {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`${API}/automations/${id}`, {
+    setListFeedback(null);
+
+    const response = await fetch(`${API}/automations/${id}`, {
       method: "DELETE",
       headers: getAuthHeader()
     });
+
+    if (response.status === 401) {
+      clearStoredAuthToken();
+      router.replace("/login?session=expired");
+      return;
+    }
+
+    if (!response.ok) {
+      if (mountedRef.current) {
+        setListFeedback({
+          type: "error",
+          text: await getErrorMessage(response)
+        });
+      }
+      return;
+    }
+
+    if (mountedRef.current) {
+      setAutomations((current) => current.filter((automation) => automation.id !== id));
+    }
+
     void load();
   }
 
@@ -608,6 +644,8 @@ export default function AutomationsPage() {
                   {automations.filter((automation) => automation.active).length}/{automations.length} ativas
                 </span>
               </div>
+
+              {listFeedback ? <FeedbackLine type={listFeedback.type} text={listFeedback.text} /> : null}
 
               <div className="mt-4 space-y-2">
                 {automations.map((automation) => (
