@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { AutomationRow } from "@/components/dashboard/automation-row";
+import { Button } from "@/components/ui/button";
 import { type AutomationRecord } from "@/lib/dashboard";
 
 type AutomationsListProps = {
@@ -9,7 +9,6 @@ type AutomationsListProps = {
   connected: boolean;
   onRetry: () => void;
   onCreateAutomation: () => void;
-  onOpenSettings: () => void;
 };
 
 export function AutomationsList({
@@ -18,8 +17,7 @@ export function AutomationsList({
   error,
   connected,
   onRetry,
-  onCreateAutomation,
-  onOpenSettings
+  onCreateAutomation
 }: AutomationsListProps) {
   return (
     <section id="automations" className="panel-surface overflow-hidden">
@@ -40,13 +38,14 @@ export function AutomationsList({
       </div>
 
       {loading ? (
-        <div className="divide-y divide-[#112411]">
+        <div className="grid gap-4 px-4 py-4">
           {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="skeleton-shimmer px-4 py-5">
-              <div className="h-4 w-48 bg-[#101510]" />
-              <div className="mt-3 h-3 w-64 bg-[#101510]" />
-              <div className="mt-4 h-2 w-full max-w-xl bg-[#101510]" />
-              <div className="mt-2 h-3 w-32 bg-[#101510]" />
+            <div key={index} className="panel-surface-soft skeleton-shimmer p-4">
+              <div className="h-4 w-40 bg-[#101510]" />
+              <div className="mt-3 h-3 w-60 bg-[#101510]" />
+              <div className="mt-4 h-3 w-36 bg-[#101510]" />
+              <div className="mt-4 h-2 w-full bg-[#101510]" />
+              <div className="mt-3 h-10 w-full bg-[#101510]" />
             </div>
           ))}
         </div>
@@ -58,7 +57,7 @@ export function AutomationsList({
           <Button
             type="button"
             onClick={onRetry}
-            className="h-10 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-xs font-bold uppercase tracking-[0.24em] text-[#031404] hover:bg-[#16a34a]"
+            className="h-10 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-sm font-semibold text-[#031404] hover:bg-[#16a34a]"
           >
             Recarregar automações
           </Button>
@@ -79,7 +78,7 @@ export function AutomationsList({
           <Button
             type="button"
             onClick={onCreateAutomation}
-            className="h-11 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-xs font-bold uppercase tracking-[0.24em] text-[#031404] hover:bg-[#16a34a]"
+            className="h-11 rounded-none border border-[#22c55e] bg-[#22c55e] px-4 font-[family:var(--font-jetbrains-mono)] text-sm font-semibold text-[#031404] hover:bg-[#16a34a]"
           >
             + Nova automação
           </Button>
@@ -87,13 +86,9 @@ export function AutomationsList({
       ) : null}
 
       {!loading && !error && automations.length > 0 ? (
-        <div>
+        <div className="grid gap-4 px-4 py-4">
           {automations.map((automation) => (
-            <AutomationRow
-              key={automation.id}
-              automation={automation}
-              onOpenSettings={onOpenSettings}
-            />
+            <AutomationRow key={automation.id} automation={automation} />
           ))}
         </div>
       ) : null}
