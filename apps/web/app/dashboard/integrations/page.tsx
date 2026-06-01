@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronRight,
@@ -124,7 +124,7 @@ function MaskedField({
               setReplacing(true);
               onChange("");
             }}
-            className="font-[family:var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[0.2em] text-[#6b7280] transition-colors hover:text-[#22c55e]"
+            className="font-[family:var(--font-jetbrains-mono)] text-xs text-[#6b7280] transition-colors hover:text-[#22c55e]"
           >
             &gt; substituir
           </button>
@@ -162,7 +162,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={loading}
-      className="group relative mt-6 h-11 w-full overflow-hidden border border-[#22c55e] bg-[#22c55e] font-[family:var(--font-jetbrains-mono)] text-xs font-bold uppercase tracking-[0.28em] text-[#031404] transition-colors duration-150 hover:bg-[#16a34a] disabled:cursor-not-allowed disabled:opacity-60"
+      className="group relative mt-6 h-11 w-full overflow-hidden border border-[#22c55e] bg-[#22c55e] font-[family:var(--font-jetbrains-mono)] text-sm font-semibold text-[#031404] transition-colors duration-150 hover:bg-[#16a34a] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-white/40 transition-all duration-300 group-hover:w-full" />
       {loading ? (
@@ -184,7 +184,7 @@ function GuideLink() {
       className="inline-flex items-center gap-1 font-[family:var(--font-jetbrains-mono)] text-xs text-[#6b7280] transition-colors hover:text-[#22c55e]"
     >
       <ChevronRight className="h-3 w-3" />
-      <span>abrir ajuda</span>
+      <span>Ajuda</span>
     </a>
   );
 }
@@ -240,6 +240,30 @@ function ChecklistRow({
       <span className="font-[family:var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[0.18em] text-[#6b7280]">
         {value}
       </span>
+    </div>
+  );
+}
+
+function CompactActions({
+  buttonLabel,
+  onButtonClick,
+  showGuide = true
+}: {
+  buttonLabel: string;
+  onButtonClick: () => void;
+  showGuide?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onButtonClick}
+        className="h-10 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-4 font-[family:var(--font-jetbrains-mono)] text-xs font-semibold text-[#86efac] shadow-none transition-colors duration-75 hover:border-[#22c55e] hover:bg-[#111611] hover:text-[#f0fdf4]"
+      >
+        {buttonLabel}
+      </Button>
+      {showGuide ? <GuideLink /> : null}
     </div>
   );
 }
@@ -310,14 +334,15 @@ function StoreCard({
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const statusTone: StatusTone =
-    feedback?.type === "error" ? "error" : status?.hasApiToken ? "success" : "pending";
-  const statusLabel =
-    statusTone === "error" ? "Erro" : status?.hasApiToken ? "Conectado" : "Pendente";
-  const summary = status?.hasApiToken
+  const completed = Boolean(status?.hasApiToken);
+  const statusTone: StatusTone = feedback?.type === "error" ? "error" : completed ? "success" : "pending";
+  const statusLabel = statusTone === "error" ? "Erro" : completed ? "Conectado" : "Pendente";
+  const summary = completed
     ? "Token da API salvo. A loja já pode enviar dados para o painel."
     : "Salve o token da API da CentralCart para liberar as próximas etapas.";
+  const isOpen = !completed || statusTone === "error" || detailsOpen;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -337,6 +362,7 @@ function StoreCard({
 
       setFeedback({ type: "ok", text: "Token da loja salvo com sucesso." });
       setToken("");
+      setDetailsOpen(false);
       onSaved();
     } catch {
       setFeedback({ type: "error", text: "Falha ao salvar. Verifique o token e tente novamente." });
@@ -355,49 +381,71 @@ function StoreCard({
       statusLabel={statusLabel}
       summary={summary}
     >
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <FieldLabel>Resumo atual</FieldLabel>
-            <GuideLink />
-          </div>
-
-          <ChecklistRow label="Plataforma" value="CentralCart" tone="success" />
-          <ChecklistRow
-            label="Token da API"
-            value={status?.hasApiToken ? "Salvo" : "Falta salvar"}
-            tone={status?.hasApiToken ? "success" : "pending"}
-          />
-        </div>
-
-        <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Store className="h-4 w-4 text-[#22c55e]" />
-              <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
-                Token da API
-              </p>
+      {isOpen ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <FieldLabel>Resumo atual</FieldLabel>
+              <div className="flex items-center gap-2">
+                {completed && detailsOpen ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDetailsOpen(false)}
+                    className="h-8 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#86efac] shadow-none hover:border-[#22c55e] hover:bg-[#111611]"
+                  >
+                    Fechar
+                  </Button>
+                ) : null}
+                <GuideLink />
+              </div>
             </div>
-            <p className="text-xs leading-5 text-[#6b7280]">
-              Esta é a ação principal deste passo. Salve ou substitua o token da loja.
-            </p>
-          </div>
 
-          <div className="mt-4">
-            <MaskedField
-              icon={Lock}
+            <ChecklistRow label="Plataforma" value="CentralCart" tone="success" />
+            <ChecklistRow
               label="Token da API"
-              configured={status?.hasApiToken ?? false}
-              value={token}
-              onChange={setToken}
-              placeholder="cc_live_xxxxxxxxxxxxxxxxxxxx"
+              value={completed ? "Salvo" : "Falta salvar"}
+              tone={completed ? "success" : "pending"}
             />
           </div>
 
-          <FeedbackLine message={feedback} />
-          <SubmitButton loading={loading}>$ Salvar token →</SubmitButton>
-        </form>
-      </div>
+          <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Store className="h-4 w-4 text-[#22c55e]" />
+                <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
+                  Token da API
+                </p>
+              </div>
+              <p className="text-xs leading-5 text-[#6b7280]">
+                Salve ou substitua o token da loja para manter a conexão ativa.
+              </p>
+            </div>
+
+            <div className="mt-4">
+              <MaskedField
+                icon={Lock}
+                label="Token da API"
+                configured={completed}
+                value={token}
+                onChange={setToken}
+                placeholder="cc_live_xxxxxxxxxxxxxxxxxxxx"
+              />
+            </div>
+
+            <FeedbackLine message={feedback} />
+            <SubmitButton loading={loading}>Salvar token</SubmitButton>
+          </form>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <ChecklistRow label="Plataforma" value="CentralCart" tone="success" />
+            <ChecklistRow label="Token da API" value="Salvo" tone="success" />
+          </div>
+          <CompactActions buttonLabel="Editar token" onButtonClick={() => setDetailsOpen(true)} />
+        </div>
+      )}
     </TerminalCard>
   );
 }
@@ -414,18 +462,20 @@ function ServerCard({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (status?.rconHost) setHost(status.rconHost);
     if (status?.rconPort) setPort(status.rconPort.toString());
   }, [status]);
 
-  const configured = Boolean(status?.rconHost && status?.rconPort);
-  const statusTone: StatusTone = feedback?.type === "error" ? "error" : configured ? "success" : "pending";
-  const statusLabel = statusTone === "error" ? "Erro" : configured ? "Conectado" : "Pendente";
-  const summary = configured
+  const completed = Boolean(status?.rconHost && status?.rconPort);
+  const statusTone: StatusTone = feedback?.type === "error" ? "error" : completed ? "success" : "pending";
+  const statusLabel = statusTone === "error" ? "Erro" : completed ? "Conectado" : "Pendente";
+  const summary = completed
     ? `RCON salvo em ${status?.rconHost}:${status?.rconPort}.`
     : "Informe host, porta e senha do RCON para permitir a execução dos comandos.";
+  const isOpen = !completed || statusTone === "error" || detailsOpen;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -453,6 +503,7 @@ function ServerCard({
 
       setFeedback({ type: "ok", text: "Configuração RCON salva com sucesso." });
       setPassword("");
+      setDetailsOpen(false);
       onSaved();
     } catch {
       setFeedback({
@@ -474,75 +525,103 @@ function ServerCard({
       statusLabel={statusLabel}
       summary={summary}
     >
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <FieldLabel>Resumo atual</FieldLabel>
-            <GuideLink />
-          </div>
-
-          <ChecklistRow
-            label="Host"
-            value={status?.rconHost ?? "Não informado"}
-            tone={status?.rconHost ? "success" : "pending"}
-          />
-          <ChecklistRow
-            label="Porta"
-            value={status?.rconPort ? String(status.rconPort) : "Não informada"}
-            tone={status?.rconPort ? "success" : "pending"}
-          />
-          <ChecklistRow
-            label="Senha RCON"
-            value={configured ? "Salva" : "Falta salvar"}
-            tone={configured ? "success" : "pending"}
-          />
-        </div>
-
-        <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Server className="h-4 w-4 text-[#22c55e]" />
-              <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
-                Credenciais do servidor
-              </p>
-            </div>
-            <p className="text-xs leading-5 text-[#6b7280]">
-              Salve a conexão atual. Não existe teste de conexão disponível nesta tela hoje.
-            </p>
-          </div>
-
-          <div className="mt-4 space-y-4">
-            <div>
-              <FieldLabel>Host</FieldLabel>
-              <Input
-                icon={Server}
-                placeholder="seu-servidor.magnohost.com.br"
-                value={host}
-                onChange={setHost}
-              />
+      {isOpen ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <FieldLabel>Resumo atual</FieldLabel>
+              <div className="flex items-center gap-2">
+                {completed && detailsOpen ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDetailsOpen(false)}
+                    className="h-8 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#86efac] shadow-none hover:border-[#22c55e] hover:bg-[#111611]"
+                  >
+                    Fechar
+                  </Button>
+                ) : null}
+                <GuideLink />
+              </div>
             </div>
 
-            <div>
-              <FieldLabel>Porta RCON</FieldLabel>
-              <Input placeholder="25575" value={port} onChange={setPort} />
-            </div>
-
-            <MaskedField
-              icon={Lock}
+            <ChecklistRow
+              label="Host"
+              value={status?.rconHost ?? "Não informado"}
+              tone={status?.rconHost ? "success" : "pending"}
+            />
+            <ChecklistRow
+              label="Porta"
+              value={status?.rconPort ? String(status.rconPort) : "Não informada"}
+              tone={status?.rconPort ? "success" : "pending"}
+            />
+            <ChecklistRow
               label="Senha RCON"
-              configured={configured}
-              value={password}
-              onChange={setPassword}
-              placeholder="Senha do RCON"
+              value={completed ? "Salva" : "Falta salvar"}
+              tone={completed ? "success" : "pending"}
             />
           </div>
 
-          <FeedbackLine message={feedback} />
-          <SubmitButton loading={loading}>
-            {configured ? "$ Atualizar conexão →" : "$ Salvar conexão →"}
-          </SubmitButton>
-        </form>
-      </div>
+          <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Server className="h-4 w-4 text-[#22c55e]" />
+                <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
+                  Credenciais do servidor
+                </p>
+              </div>
+              <p className="text-xs leading-5 text-[#6b7280]">
+                Salve a conexão atual. Não existe teste de conexão disponível nesta tela hoje.
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <FieldLabel>Host</FieldLabel>
+                <Input
+                  icon={Server}
+                  placeholder="seu-servidor.magnohost.com.br"
+                  value={host}
+                  onChange={setHost}
+                />
+              </div>
+
+              <div>
+                <FieldLabel>Porta RCON</FieldLabel>
+                <Input placeholder="25575" value={port} onChange={setPort} />
+              </div>
+
+              <MaskedField
+                icon={Lock}
+                label="Senha RCON"
+                configured={completed}
+                value={password}
+                onChange={setPassword}
+                placeholder="Senha do RCON"
+              />
+            </div>
+
+            <FeedbackLine message={feedback} />
+            <SubmitButton loading={loading}>Salvar servidor</SubmitButton>
+          </form>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <ChecklistRow label="Host" value={status?.rconHost ?? "Não informado"} tone="success" />
+            <ChecklistRow
+              label="Porta"
+              value={status?.rconPort ? String(status.rconPort) : "Não informada"}
+              tone="success"
+            />
+            <ChecklistRow label="Senha RCON" value="Salva" tone="success" />
+          </div>
+          <CompactActions
+            buttonLabel="Editar servidor"
+            onButtonClick={() => setDetailsOpen(true)}
+          />
+        </div>
+      )}
     </TerminalCard>
   );
 }
@@ -559,20 +638,18 @@ function WebhookCard({
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
   const [secretSavedInSession, setSecretSavedInSession] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const completed = Boolean(status?.webhookUrl && secretSavedInSession);
   const hasWebhookUrl = Boolean(status?.webhookUrl);
-  const statusTone: StatusTone =
-    feedback?.type === "error"
-      ? "error"
-      : hasWebhookUrl && secretSavedInSession
-        ? "success"
-        : "pending";
-  const statusLabel = statusTone === "error" ? "Erro" : statusTone === "success" ? "Configurado" : "Pendente";
-  const summary = hasWebhookUrl
-    ? secretSavedInSession
-      ? "URL copiada e secret salvo nesta sessão."
-      : "A URL já está disponível. Falta salvar o webhook secret para concluir este passo."
-    : "Assim que a integração estiver pronta, a URL do webhook aparecerá aqui para cópia.";
+  const statusTone: StatusTone = feedback?.type === "error" ? "error" : completed ? "success" : "pending";
+  const statusLabel = statusTone === "error" ? "Erro" : completed ? "Configurado" : "Pendente";
+  const summary = completed
+    ? "URL disponível e secret salvo nesta sessão."
+    : hasWebhookUrl
+      ? "A URL já está disponível. Falta salvar o webhook secret para concluir este passo."
+      : "Assim que a integração estiver pronta, a URL do webhook aparecerá aqui para cópia.";
+  const isOpen = !completed || statusTone === "error" || detailsOpen;
 
   async function handleCopy() {
     if (!status?.webhookUrl) return;
@@ -600,6 +677,7 @@ function WebhookCard({
       setFeedback({ type: "ok", text: "Webhook secret salvo com sucesso." });
       setSecret("");
       setSecretSavedInSession(true);
+      setDetailsOpen(false);
       onSaved();
     } catch {
       setFeedback({ type: "error", text: "Falha ao salvar o secret. Tente novamente." });
@@ -618,91 +696,114 @@ function WebhookCard({
       statusLabel={statusLabel}
       summary={summary}
     >
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <FieldLabel>Resumo atual</FieldLabel>
-            <GuideLink />
+      {isOpen ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <FieldLabel>Resumo atual</FieldLabel>
+              <div className="flex items-center gap-2">
+                {completed && detailsOpen ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDetailsOpen(false)}
+                    className="h-8 rounded-none border border-[#1a4a1a] bg-[#0a0a0a] px-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#86efac] shadow-none hover:border-[#22c55e] hover:bg-[#111611]"
+                  >
+                    Fechar
+                  </Button>
+                ) : null}
+                <GuideLink />
+              </div>
+            </div>
+
+            <ChecklistRow
+              label="URL do webhook"
+              value={hasWebhookUrl ? "Disponível" : "Aguardando"}
+              tone={hasWebhookUrl ? "success" : "pending"}
+            />
+            <ChecklistRow
+              label="Webhook secret"
+              value={secretSavedInSession ? "Salvo nesta sessão" : "Falta salvar"}
+              tone={secretSavedInSession ? "success" : "pending"}
+            />
           </div>
 
-          <ChecklistRow
-            label="URL do webhook"
-            value={hasWebhookUrl ? "Disponível" : "Aguardando"}
-            tone={hasWebhookUrl ? "success" : "pending"}
-          />
-          <ChecklistRow
-            label="Webhook secret"
-            value={secretSavedInSession ? "Salvo nesta sessão" : "Falta salvar"}
-            tone={secretSavedInSession ? "success" : "pending"}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <section className="panel-surface-soft p-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Webhook className="h-4 w-4 text-[#22c55e]" />
-                <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
-                  URL do webhook
+          <div className="space-y-4">
+            <section className="panel-surface-soft p-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Webhook className="h-4 w-4 text-[#22c55e]" />
+                  <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
+                    URL do webhook
+                  </p>
+                </div>
+                <p className="text-xs leading-5 text-[#6b7280]">
+                  Copie esta URL e cole na CentralCart em Configurações → Webhooks.
                 </p>
               </div>
-              <p className="text-xs leading-5 text-[#6b7280]">
-                Copie esta URL e cole na CentralCart em Configurações → Webhooks.
-              </p>
-            </div>
 
-            <div className="mt-4 flex items-center border border-[rgba(34,197,94,0.4)] bg-[#0a0a0a]">
-              <span className="flex-1 truncate px-3 py-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#86efac]">
-                {status?.webhookUrl ?? "A URL será exibida assim que a integração estiver disponível"}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleCopy()}
-                disabled={!status?.webhookUrl}
-                className="h-auto rounded-none border-0 border-l border-[rgba(34,197,94,0.4)] bg-transparent px-3 py-3 font-[family:var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[0.2em] text-[#6b7280] shadow-none hover:bg-[#0f1a0f] hover:text-[#22c55e]"
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Copiado" : "Copiar URL"}
-              </Button>
-            </div>
-          </section>
+              <div className="mt-4 flex items-center border border-[rgba(34,197,94,0.4)] bg-[#0a0a0a]">
+                <span className="flex-1 truncate px-3 py-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#86efac]">
+                  {status?.webhookUrl ?? "A URL será exibida assim que a integração estiver disponível"}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleCopy()}
+                  disabled={!status?.webhookUrl}
+                  className="h-auto rounded-none border-0 border-l border-[rgba(34,197,94,0.4)] bg-transparent px-3 py-3 font-[family:var(--font-jetbrains-mono)] text-xs text-[#6b7280] shadow-none hover:bg-[#0f1a0f] hover:text-[#22c55e]"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? "Copiado" : "Copiar URL"}
+                </Button>
+              </div>
+            </section>
 
-          <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-[#22c55e]" />
-                <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
-                  Webhook secret
+            <form onSubmit={handleSubmit} className="panel-surface-soft p-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-[#22c55e]" />
+                  <p className="font-[family:var(--font-share-tech-mono)] text-sm uppercase tracking-[0.24em] text-[#f0f0f0]">
+                    Webhook secret
+                  </p>
+                </div>
+                <p className="text-xs leading-5 text-[#6b7280]">
+                  Depois de criar o webhook na CentralCart, salve aqui o secret gerado por ela.
                 </p>
               </div>
-              <p className="text-xs leading-5 text-[#6b7280]">
-                Depois de criar o webhook na CentralCart, salve aqui o secret gerado por ela.
-              </p>
-            </div>
 
-            <div className="mt-4">
-              <MaskedField
-                icon={Lock}
-                label="Webhook Secret"
-                configured={secretSavedInSession}
-                value={secret}
-                onChange={setSecret}
-                placeholder="whsec_xxxxxxxxxxxxxxxxxxxx"
-              />
-            </div>
+              <div className="mt-4">
+                <MaskedField
+                  icon={Lock}
+                  label="Webhook secret"
+                  configured={secretSavedInSession}
+                  value={secret}
+                  onChange={setSecret}
+                  placeholder="whsec_xxxxxxxxxxxxxxxxxxxx"
+                />
+              </div>
 
-            <FeedbackLine message={feedback} />
-            <SubmitButton loading={loading}>$ Salvar secret →</SubmitButton>
-          </form>
+              <FeedbackLine message={feedback} />
+              <SubmitButton loading={loading}>Salvar secret</SubmitButton>
+            </form>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <ChecklistRow label="URL do webhook" value="Disponível" tone="success" />
+            <ChecklistRow label="Webhook secret" value="Salvo nesta sessão" tone="success" />
+          </div>
+          <CompactActions buttonLabel="Ver detalhes" onButtonClick={() => setDetailsOpen(true)} />
+        </div>
+      )}
     </TerminalCard>
   );
 }
 
 export default function IntegrationsPage() {
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
+  const storeTokenConfirmedRef = useRef(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -713,13 +814,42 @@ export default function IntegrationsPage() {
       if (!response.ok) return;
 
       const data = await response.json();
-      setStatus(data);
+
+      storeTokenConfirmedRef.current = storeTokenConfirmedRef.current || Boolean(data.hasApiToken);
+
+      setStatus({
+        ...data,
+        hasApiToken: Boolean(data.hasApiToken) || storeTokenConfirmedRef.current
+      });
     } catch {}
   }, []);
 
   useEffect(() => {
     void fetchStatus();
   }, [fetchStatus]);
+
+  function handleStoreSaved() {
+    storeTokenConfirmedRef.current = true;
+
+    setStatus((current) => {
+      if (!current) {
+        return {
+          hasConfig: false,
+          hasApiToken: true,
+          rconHost: null,
+          rconPort: null,
+          webhookUrl: null
+        };
+      }
+
+      return {
+        ...current,
+        hasApiToken: true
+      };
+    });
+
+    void fetchStatus();
+  }
 
   return (
     <div className="space-y-8">
@@ -736,7 +866,7 @@ export default function IntegrationsPage() {
       </div>
 
       <div className="space-y-6">
-        <StoreCard status={status} onSaved={() => void fetchStatus()} />
+        <StoreCard status={status} onSaved={handleStoreSaved} />
         <ServerCard status={status} onSaved={() => void fetchStatus()} />
         <WebhookCard status={status} onSaved={() => void fetchStatus()} />
       </div>
