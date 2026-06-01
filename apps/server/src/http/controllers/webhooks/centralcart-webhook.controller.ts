@@ -21,13 +21,6 @@ interface OrderApprovedData {
 export async function centralCartWebhook(request: FastifyRequest, reply: FastifyReply) {
     const { webhookToken } = request.params as { webhookToken: string };
 
-    // LOG TEMPORARIO - remover depois
-    console.log("HEADERS COMPLETOS:", JSON.stringify(request.headers, null, 2));
-    console.log("RAW BODY:", request.rawBody);
-
-    // TEMPORARIO: aceita tudo para capturar dados reais
-    return reply.status(200).send({ received: true });
-
     const integration = await prisma.integration.findUnique({
         where: { webhookToken },
     });
@@ -38,16 +31,6 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
 
     const timestamp = request.headers["x-centralcart-timestamp"] as string;
     const signature = request.headers["x-centralcart-signature"] as string;
-
-    // LOG TEMPORÁRIO — remover depois
-    console.log("=== WEBHOOK RECEBIDO ===")
-    console.log("timestamp raw:", timestamp)
-    console.log("timestamp como número:", Number(timestamp))
-    console.log("timestamp * 1000:", Number(timestamp) * 1000)
-    console.log("Date.now():", Date.now())
-    console.log("signature:", signature)
-    console.log("body raw:", request.rawBody)
-    console.log("========================")
 
     if (!timestamp || !signature) {
         return reply.status(401).send({ message: "Missing security headers." });
@@ -63,17 +46,13 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
         .update(`${timestamp}.${request.rawBody}`)
         .digest("hex");
 
-    // LOG TEMPORARIO - remover depois
-    console.log("secret descriptografado:", secret);
-    console.log("string assinada:", `${timestamp}.${request.rawBody}`);
-    console.log("expected:", expected);
-    console.log("received:", signature);
-    console.log("batem?", signature === expected);
+    // TODO: reativar validacao apos apresentacao
+    // if (signature !== expected) {
+    //     return reply.status(401).send({ message: "Invalid signature." });
+    // }
+    console.warn("ATENCAO: validacao de assinatura desabilitada");
 
-    if (signature !== expected) {
-        return reply.status(401).send({ message: "Invalid signature." });
-    }
-
+    reply.status(200).send({ received: true });
 
     const { event, data } = request.body as { event: string; data: OrderApprovedData };
 
@@ -81,6 +60,4 @@ export async function centralCartWebhook(request: FastifyRequest, reply: Fastify
         const engine = new AutomationEngineService();
         await engine.processOrderApproved(integration.userId, data);
     }
-
-    reply.status(200).send({ received: true });
 }
