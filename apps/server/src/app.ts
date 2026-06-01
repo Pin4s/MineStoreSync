@@ -31,7 +31,10 @@ app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, 
   }
 });
 
-app.register(cors);
+app.register(cors, {
+  origin: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],  
+})
 app.register(jwt, {
   secret: env.JWT_SECRET
 });

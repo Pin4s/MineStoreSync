@@ -347,7 +347,7 @@ function ServerCard({ status, onSaved }: { status: IntegrationStatus | null; onS
     }
   };
 
-  const alreadyConfigured = status?.hasConfig ?? false;
+  const alreadyConfigured = Boolean(status?.rconHost && status?.rconPort);
 
   return (
     <TerminalCard command="> minestoresync --rcon-config">
@@ -425,8 +425,8 @@ function WebhookCard({ status, onSaved }: { status: IntegrationStatus | null; on
     setFeedback(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/integrations`, {
-        method: "POST",
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/integrations/webhook-secret`, {
+        method: "PATCH",
         headers: getAuthHeader(),
         body: JSON.stringify({ webhookSecret: secret }),
       });
@@ -443,7 +443,7 @@ function WebhookCard({ status, onSaved }: { status: IntegrationStatus | null; on
     }
   };
 
-  const alreadyConfigured = status?.hasConfig ?? false;
+  const alreadyConfigured = false;
 
   return (
     <TerminalCard command="> minestoresync --webhook-config">
