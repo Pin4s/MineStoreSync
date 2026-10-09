@@ -1,0 +1,71 @@
+model Player {
+    id       String @id @default(uuid())
+    nickname String
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    @@map("players")
+}
+
+model WebhookEvents {
+    id         String @id @default(uuid())
+    externalId String @map("external_id")
+    eventType  String @map("event_type")
+    payload    Json
+
+    status    Status   @default(RECEIVED)
+    attempts Int      @default(0)
+    lastError String?   @map("last_error")
+    processedAt DateTime? @map("processed_at")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    @@map("webhook_events")
+}
+
+enum Status {
+    RECEIVED
+    PROCESSED
+    FAILED
+}
+
+model Purchases{
+    id String @id @default(uuid())
+
+    playerId String @map("player_id")
+    webhookEventId String @map("webhook_event_id")
+
+    externalId String @map("external_id")
+
+    amountCents Int @map("amount_cents")
+    purchasedAt DateTime @map("purchased_at")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    @@map("purchases")
+}
+
+model TriggerCommands{
+    id String @id @default(uuid())
+
+    triggerKey String @map("trigger_key")
+    sortOrder Int @map("sort_order")
+    command String  
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    @@map("trigger_commands")
+}
+
+model TriggerExecutions{
+    id String @id @default(uuid())
+
+    triger_key String @map("trigger_key")
+    playerId String @map("player_id")
+
+    @@map("trigger_executions")
+}
