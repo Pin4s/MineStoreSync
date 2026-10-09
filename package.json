@@ -1,0 +1,24 @@
+{
+  "name": "minestoresync",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "scripts": {
+    "dev": "npx tsx watch --env-file .env src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "fastify": "^5.12.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15"
+  },
+  "type": "module",
+  "compilerOptions": {
+    "strict": true
+  }
+}
