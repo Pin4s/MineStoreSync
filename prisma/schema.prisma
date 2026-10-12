@@ -1,71 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
 model Player {
-    id       String @id @default(uuid())
-    nickname String
+  id       String @id @default(uuid()) 
+  nickname String @unique
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    @@map("players")
+  purchases         Purchases[]
+  triggerExecutions TriggerExecutions[]
+
+  @@map("players")
 }
 
 model WebhookEvents {
-    id         String @id @default(uuid())
-    externalId String @map("external_id")
-    eventType  String @map("event_type")
-    payload    Json
+  id         String @id @default(uuid())
+  externalId String @unique @map("external_event_id")
+  eventType  String @map("event_type")
+  payload    Json
 
-    status    Status   @default(RECEIVED)
-    attempts Int      @default(0)
-    lastError String?   @map("last_error")
-    processedAt DateTime? @map("processed_at")
+  status      Status    @default(RECEIVED)
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    @@map("webhook_events")
+  purchases Purchases[]
+
+  @@map("webhook_events")
+}
+
+enum CommandStatus {
+  PENDING
+  SENT
+  NEEDS_ACTION
+  RESOLVED_MANUALLY
 }
 
 enum Status {
-    RECEIVED
-    PROCESSED
-    FAILED
+  RECEIVED
+  PROCESSED
+  FAILED
 }
 
-model Purchases{
-    id String @id @default(uuid())
+model Purchases {
+  id String @id @default(uuid())
 
-    playerId String @map("player_id")
-    webhookEventId String @map("webhook_event_id")
+  playerId String @map("player_id")
+  player   Player @relation(fields: [playerId], references: [id])
 
-    externalId String @map("external_id")
+  webhookEventId String        @map("webhook_event_id")
+  webhookEvent   WebhookEvents @relation(fields: [webhookEventId], references: [id])
 
-    amountCents Int @map("amount_cents")
-    purchasedAt DateTime @map("purchased_at")
+  externalId String @unique @map("external_purchase_id")
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  amountCents Int      @map("amount_cents")
+  purchasedAt DateTime @map("purchased_at") @db.Timestamptz(6)
 
-    @@map("purchases")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  triggerExecutions TriggerExecutions[]
+
+  @@map("purchases")
 }
 
-model TriggerCommands{
-    id String @id @default(uuid())
+model TriggerCommands {
+  id String @id @default(uuid())
 
-    triggerKey String @map("trigger_key")
-    sortOrder Int @map("sort_order")
-    command String  
+  triggerKey String @map("trigger_key")
+  sortOrder  Int    @map("sort_order")
+  command    String
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    @@map("trigger_commands")
+  @@unique([triggerKey, sortOrder])
+  @@map("trigger_commands")
 }
 
-model TriggerExecutions{
-    id String @id @default(uuid())
+model TriggerExecutions {
+  id String @id @default(uuid())
 
-    triger_key String @map("trigger_key")
-    playerId String @map("player_id")
+  triggerKey String @map("trigger_key")
 
-    @@map("trigger_executions")
+  playerId String? @map("player_id")
+  player   Player? @relation(fields: [playerId], references: [id])
+
+  purchaseId String?    @map("purchase_id")
+  purchase   Purchases? @relation(fields: [purchaseId], references: [id])
+
+  periodKey String @map("period_key")
+  dedupeKey String @unique @map("dedupe_key")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  commandExecutions CommandsExecutions[]
+
+  @@map("trigger_executions")
+}
+
+model CommandsExecutions {
+  id String @id @default(uuid())
+
+  triggerExecutionId String            @map("trigger_execution_id")
+  triggerExecution   TriggerExecutions @relation(fields: [triggerExecutionId], references: [id])
+
+  sortOrder Int           @map("sort_order")
+  command   String
+  status    CommandStatus @default(PENDING)
+
+  attempts       Int       @default(0)
+  nextAttemptAt  DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastResponse   String?   @map("last_response")
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz(6)
+  resolutionNote String?   @map("resolution_note")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([triggerExecutionId, sortOrder])
+  @@map("command_executions")
 }
