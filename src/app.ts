@@ -1,9 +1,9 @@
 import Fastify from 'fastify'
+import { weebhooksRoutes } from './modules/webhooks/weebhooks.routes'
 
 const app = Fastify()
-console.log('App instanciado')
-console.log("Indo pra server")
+
+app.register(weebhooksRoutes, { prefix: "webhooks" })
 
 
-
-export {app}
+export { app }
