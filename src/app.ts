@@ -1,9 +1,9 @@
 import Fastify from 'fastify'
-import { weebhooksRoutes } from './modules/webhooks/weebhooks.routes'
+import { webhooksRoutes } from './modules/webhooks/webhooks.routes'
 
 const app = Fastify()
 
-app.register(weebhooksRoutes, { prefix: "webhooks" })
+app.register(webhooksRoutes, { prefix: "webhooks" })
 
 
 export { app }

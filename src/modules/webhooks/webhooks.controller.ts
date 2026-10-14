@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import z, { ZodError } from "zod";
-import { webhookSchema } from "./weebhooks.schema";
+import { webhookSchema } from "./webhooks.schema";
 
-export async function receiveWeebhook(
+export async function receiveWebhook(
     request: FastifyRequest,
     reply: FastifyReply
 ) {
