@@ -1,6 +1,8 @@
 import { app } from "./app"
 
-app.listen({ port: 3333, host: '127.0.0.1' }, (err, address) => {
+const port = Number(process.env.PORT) || 3333
+
+app.listen({ port, host: '0.0.0.0' }, (err, address) => {
     console.log(`Server is running on ${address}`)
 
     if (err) {
