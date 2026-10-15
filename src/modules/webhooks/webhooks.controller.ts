@@ -55,6 +55,8 @@ export async function receiveWebhook(
         })
     }
 
+    console.log(request.body) //i'll remove that later
+
     return reply.code(200).send({
         message: "Webhook recebido",
         result: result
