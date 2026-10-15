@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "app.ts",
   "scripts": {
-    "dev": "npx tsx watch --env-file .env src/server.ts"
+    "dev": "npx tsx watch --env-file .env src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
