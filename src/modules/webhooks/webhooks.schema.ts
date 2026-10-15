@@ -1,5 +1,6 @@
 import z from 'zod'
 
+
 export const webhookSchema = z.object({
     id: z.string().min(1),
     event: z.string().min(1),
