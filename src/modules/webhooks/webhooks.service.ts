@@ -1,12 +1,8 @@
 
+import { Status } from "../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
-enum Status {
-    RECEIVED = "RECEIVED",
-    PROCESSING = "PROCESSING",
-    APPROVED = "APPROVED",
-    FAILED = "FAILED",
-}
+
 
 interface WebhookInput {
     externalId: string;
@@ -29,3 +25,27 @@ export async function saveWebhook({
 
     return result
 }
+
+export async function updateWebhookStatus(status: Status, webhookEventId: string, message?: string) {
+
+    await prisma.webhookEvents.update({
+        where: { id: webhookEventId },
+        data: {
+            status: status,
+            attempts: { increment: 1 },
+            lastError: message,
+            processedAt: status === Status.PROCESSED ? new Date() : null
+        }
+    })
+}
+
+export async function findWebhookEvents() {
+
+    const webhookEvent = await prisma.webhookEvents.findFirst({
+        where: { status: 'RECEIVED' },
+        orderBy: { createdAt: 'asc' }
+    })
+
+    return webhookEvent
+}
+
