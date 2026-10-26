@@ -4,10 +4,12 @@ import { findWebhookEvents, updateWebhookStatus } from "../modules/webhooks/webh
 
 import { Status } from "../generated/prisma/enums";
 import { PurchasesService } from "../modules/purchases/purchases.service";
+import { RulesEngineService } from "../modules/rules/rulesEngine.service";
 
 export async function processorWebhookEvent() {
 
     const purchasesService = new PurchasesService()
+    const rulesEngineService = new RulesEngineService()
 
     const webhookEvent = await findWebhookEvents()
     if (!webhookEvent) return
@@ -18,7 +20,7 @@ export async function processorWebhookEvent() {
         const {
             date
         } = webhook
-        
+
         const {
             client_identifier,
             price,
@@ -27,7 +29,7 @@ export async function processorWebhookEvent() {
 
         const player = await findOrCreatePlayerByNickname(client_identifier)
 
-        await purchasesService.createPurchase({
+        const purchase = await purchasesService.createPurchase({
             playerId: player.id,
             amount: price,
             webhookEventId: webhookEvent.id,
@@ -35,10 +37,13 @@ export async function processorWebhookEvent() {
             purchaseDate: date
         })
 
+        await rulesEngineService.processPurchase(purchase.id)
+
         await updateWebhookStatus(
             Status.PROCESSED,
             webhookEvent.id
         )
+
 
 
     } catch (error) {

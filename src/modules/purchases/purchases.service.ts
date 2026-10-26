@@ -8,7 +8,7 @@ export class PurchasesService {
     }
 
     async createPurchase({ playerId, amount, webhookEventId, externalId, purchaseDate }: Purchase) {
-        await prisma.purchases.create({
+        const purchase = await prisma.purchases.create({
             data: {
                 playerId,
                 amountCents: this.convertToCentets(amount),
@@ -17,5 +17,7 @@ export class PurchasesService {
                 purchasedAt: new Date(purchaseDate)
             }
         })
+
+        return purchase
     }
 }
