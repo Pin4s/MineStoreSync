@@ -1,8 +1,10 @@
 import { prisma } from "../../lib/prisma";
+import { TriggerCommandsService } from "../triggersCommands/triggersCommands.service";
 import { TriggersExecutionsService } from "../triggersExecutions/triggersExecutions.service";
 
 export class RulesEngineService {
 
+    //this turn in chaos, i'll refactor this later, but for now, this is the simplest way to do it
 
     public async processPurchase(purchase_id: string) {
         const triggersExecutionsService = new TriggersExecutionsService()
@@ -15,7 +17,7 @@ export class RulesEngineService {
             throw new Error("Compra não encontrada");
         }
         console.log("Processing purchase with ID:", purchase_id);
-        
+
         const periodKey = await this.getPeriodKey(purchase.purchasedAt);
         console.log("Period key:", periodKey);
 
@@ -25,6 +27,9 @@ export class RulesEngineService {
             periodKey,
             purchaseId: purchase.id
         });
+
+        const triggercommand = new TriggerCommandsService()
+        triggercommand.executeComand()
 
         return purchase;
 
