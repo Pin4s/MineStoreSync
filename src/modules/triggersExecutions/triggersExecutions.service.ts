@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { logPipeline } from "../../lib/pipeline-log";
 
 export interface TriggerExecutionSchema {
     playerId: string;
@@ -15,7 +16,7 @@ export class TriggersExecutionsService {
         });
 
         if (existingBonus) {
-            console.log("Bonus already exists for this player and period. Skipping bonus creation.");
+            logPipeline("trigger.duplicate_found", { purchaseId, playerId, periodKey, triggerExecutionId: existingBonus.id });
             return;
         }
 
@@ -29,6 +30,7 @@ export class TriggersExecutionsService {
             }
         })
 
+        logPipeline("trigger.saved", { purchaseId, playerId, periodKey, triggerExecutionId: triggerExecutions.id });
         return triggerExecutions
     }
 }

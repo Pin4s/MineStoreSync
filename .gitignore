@@ -3,3 +3,4 @@ node_modules
 src/generated
 MINE_STORE_SYNC_CRONOGRAMA.md
 dist
+clearbd.ts

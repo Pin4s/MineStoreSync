@@ -1,4 +1,5 @@
 import { processorWebhookEvent } from "./webhook-events.processor";
+import { logPipeline, logPipelineError } from "../lib/pipeline-log";
 
 export class WebhookEventsWorker {
     private isRunning = false
@@ -8,6 +9,7 @@ export class WebhookEventsWorker {
         if (this.isRunning) return
 
         this.isRunning = true
+        logPipeline("worker.started");
         void this.poll()
     }
 
@@ -17,7 +19,7 @@ export class WebhookEventsWorker {
             await processorWebhookEvent()
 
         } catch (error) {
-            console.error('Webhook worker polling failed:', error)
+            logPipelineError("worker.poll_failed", error)
         } finally {
             if (this.isRunning) {
                 this.timer = setTimeout(() => {
@@ -30,6 +32,7 @@ export class WebhookEventsWorker {
     public stop() {
         this.isRunning = false
         if (this.timer) clearTimeout(this.timer)
+        logPipeline("worker.stopped");
     }
 
 }
