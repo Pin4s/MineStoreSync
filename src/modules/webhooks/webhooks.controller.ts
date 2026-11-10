@@ -12,7 +12,12 @@ export async function receiveWebhook(
 
         const secret = process.env.CENTRALCART_WEBHOOK_SECRET
 
-        if (!secret) return  
+        if (!secret) {
+            console.error("[Webhook] CENTRALCART_WEBHOOK_SECRET is not configured")
+            return reply.code(500).send({
+                message: "Webhook secret not configured"
+            });
+        }
 
         const signature = request.headers["x-centralcart-signature"];
         const timestamp = request.headers["x-centralcart-timestamp"];
@@ -44,6 +49,15 @@ export async function receiveWebhook(
         }
     }
 
+    const event = (request.body as { event?: unknown } | undefined)?.event
+
+    if (event !== "ORDER_APPROVED") {
+        console.info(`[Webhook] Ignored event ${String(event)}`)
+        return reply.code(200).send({
+            message: "Webhook ignored"
+        });
+    }
+
     const payload = webhookSchema.safeParse(request.body)
 
     if (!payload.success) {
@@ -53,10 +67,13 @@ export async function receiveWebhook(
         });
     }
 
-    const { id: externalId, event: eventType } = payload.data
+    const { id: externalId, event: eventType, data } = payload.data
 
     try {
         const saved = await saveWebhook({ externalId, eventType, payload: request.body as object })
+        console.info(
+            `[Webhook] Saved event ${saved.id} (external ${externalId}, ${eventType}) - nick ${data.client_identifier}, order ${data.internal_id}, price ${data.price}`
+        )
         return reply.code(200).send({
             message: "Webhook received",
             id: saved.id,
