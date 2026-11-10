@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "webhook_events" ADD COLUMN "next_attempt_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP;

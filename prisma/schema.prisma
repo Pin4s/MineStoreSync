@@ -26,10 +26,11 @@ model WebhookEvents {
   eventType  String @map("event_type")
   payload    Json
 
-  status      Status    @default(RECEIVED)
-  attempts    Int       @default(0)
-  lastError   String?   @map("last_error")
-  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+  status        Status    @default(RECEIVED)
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError     String?   @map("last_error")
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
