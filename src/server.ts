@@ -1,15 +1,9 @@
 import { app } from "./app"
+import { prisma } from "./lib/prisma"
 import { WebhookEventsWorker } from "./workers/webhook-events.worker"
 
 const port = Number(process.env.PORT) || 3333
 const worker = new WebhookEventsWorker()
-
-app.listen({ port, host: '0.0.0.0' }, (err, address) => {
-    console.log(`Server is running on ${address}`)
-    if (err) {
-        app.log.error(err)
-    }
-})
 
 app.addHook("onClose", async () => {
     worker.stop();
@@ -27,5 +21,23 @@ async function shutdown() {
 process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
 
+async function healthCheck(name: string, check: () => Promise<unknown>) {
+    try {
+        await check()
+        console.info(`[Health] ${name}: OK`)
+    } catch (error) {
+        console.error(`[Health] ${name}: FAIL`, error)
+        process.exit(1)
+    }
+}
 
-worker.start()
+async function bootstrap() {
+    await healthCheck("DB", () => prisma.$queryRaw`SELECT 1`)
+    await healthCheck("API", () => app.listen({ port, host: "0.0.0.0" }))
+    await healthCheck("Worker", () => prisma.webhookEvents.findFirst({ select: { id: true } }))
+
+    console.info(`Server is running on port ${port}`)
+    worker.start()
+}
+
+void bootstrap()
