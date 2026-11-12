@@ -1,8 +1,9 @@
+import { env } from "./config/env"
 import { app } from "./app"
 import { prisma } from "./lib/prisma"
 import { WebhookEventsWorker } from "./workers/webhook-events.worker"
 
-const port = Number(process.env.PORT) || 3333
+const port = env.PORT
 const worker = new WebhookEventsWorker()
 
 app.addHook("onClose", async () => {

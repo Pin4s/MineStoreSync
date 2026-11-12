@@ -1,4 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import { env } from "../../config/env";
 import { webhookSchema } from "./webhooks.schema";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { saveWebhook } from "./webhooks.service";
@@ -11,9 +12,9 @@ export async function receiveWebhook(
 
     logPipeline("webhook.received", { requestId: request.id });
 
-    if (process.env.ENVIROMENT !== "dev") {
+    if (env.ENVIRONMENT !== "dev") {
 
-        const secret = process.env.CENTRALCART_WEBHOOK_SECRET
+        const secret = env.CENTRALCART_WEBHOOK_SECRET
 
         if (!secret) {
             logPipeline("webhook.signature_unavailable", { requestId: request.id });
