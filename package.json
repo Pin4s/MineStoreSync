@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "npx tsx watch --env-file .env src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test:scenarios": "tsx scripts/scenarios/run.ts"
   },
   "keywords": [],
   "author": "",
