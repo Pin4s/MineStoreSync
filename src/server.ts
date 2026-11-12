@@ -1,13 +1,20 @@
 import { env } from "./config/env"
 import { app } from "./app"
 import { prisma } from "./lib/prisma"
+import { getRconConfig } from "./lib/rcon"
+import { logPipeline } from "./lib/pipeline-log"
 import { WebhookEventsWorker } from "./workers/webhook-events.worker"
+import { CommandExecutionsWorker } from "./workers/command-executions.worker"
 
 const port = env.PORT
 const worker = new WebhookEventsWorker()
 
+const rconConfig = getRconConfig()
+const commandWorker = rconConfig ? new CommandExecutionsWorker(rconConfig) : null
+
 app.addHook("onClose", async () => {
     worker.stop();
+    commandWorker?.stop();
 });
 
 async function shutdown() {
@@ -39,6 +46,12 @@ async function bootstrap() {
 
     console.info(`Server is running on port ${port}`)
     worker.start()
+
+    if (commandWorker) {
+        commandWorker.start()
+    } else {
+        logPipeline("commands.rcon_disabled")
+    }
 }
 
 void bootstrap()

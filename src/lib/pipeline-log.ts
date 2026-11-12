@@ -28,7 +28,17 @@ const messages: Record<string, string> = {
     "trigger.saved": "Gatilho criado",
     "commands.templates_loaded": "Modelos de comando encontrados",
     "commands.execution_saved": "Comando colocado na fila",
-    "commands.queued": "Fila de comandos pronta"
+    "commands.queued": "Fila de comandos pronta",
+    "commands.rcon_disabled": "Envio de comandos DESLIGADO: defina RCON_HOST, RCON_PORT e RCON_PASSWORD para ativar",
+    "commands.worker_started": "Worker de envio iniciado. Aguardando comandos",
+    "commands.worker_stopped": "Worker de envio parado",
+    "commands.worker_poll_failed": "Worker de envio falhou ao buscar ou gravar um comando",
+    "command.selected": "Enviando comando via RCON",
+    "command.sent": "Comando enviado",
+    "command.send_failed": "Falha ao enviar comando via RCON",
+    "command.retry_scheduled": "Nova tentativa de envio agendada",
+    "command.needs_action": "Comando precisa de ação manual: tentativas esgotadas",
+    "rcon.connection_error": "Erro na conexão RCON"
 };
 
 const labels: Record<string, string> = {
@@ -47,6 +57,8 @@ const labels: Record<string, string> = {
     sortOrder: "ordem",
     commandCount: "comandos",
     count: "quantidade",
+    nextAttemptAt: "próxima tentativa",
+    maxAttempts: "máximo de tentativas",
     reason: "motivo"
 };
 
@@ -62,7 +74,10 @@ const warnings = new Set([
     "webhook.duplicate",
     "webhook.failed_status_saved",
     "rules.purchase_missing",
-    "trigger.duplicate_found"
+    "trigger.duplicate_found",
+    "commands.rcon_disabled",
+    "command.retry_scheduled",
+    "command.needs_action"
 ]);
 
 const successes = new Set([
@@ -70,7 +85,8 @@ const successes = new Set([
     "webhook.processed",
     "purchase.saved",
     "trigger.saved",
-    "commands.queued"
+    "commands.queued",
+    "command.sent"
 ]);
 
 function formatContext(context: PipelineContext): string {

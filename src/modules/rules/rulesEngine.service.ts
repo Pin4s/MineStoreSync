@@ -13,6 +13,7 @@ export class RulesEngineService {
 
         const purchase = await prisma.purchases.findUnique({
             where: { id: purchase_id },
+            include: { player: true },
         })
 
         if (!purchase) {
@@ -35,7 +36,7 @@ export class RulesEngineService {
 
                 const triggerCommandsService = new TriggerCommandsService()
 
-                const commandCount = await triggerCommandsService.generateCommandExecutions(triggerKey, id, tx)
+                const commandCount = await triggerCommandsService.generateCommandExecutions(triggerKey, id, purchase.player.nickname, tx)
                 logPipeline("rules.commands_ready", { purchaseId: purchase.id, triggerExecutionId: id, commandCount });
             }
         });
