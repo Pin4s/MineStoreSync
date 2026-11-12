@@ -5,6 +5,7 @@ import { TriggerCommandsService } from "../triggersCommands/triggersCommands.ser
 import { TriggersExecutionsService } from "../triggersExecutions/triggersExecutions.service";
 import { createGoalCycle, findFirstPurchaseDate, GoalCycle, lockCurrentGoalCycle, markGoalCycleReached, sumGoalCycle } from "../goalCycles/goalCycles.service";
 import { logPipeline } from "../../lib/pipeline-log";
+import { getPeriodKey } from "../../lib/period";
 
 const FIRST_PURCHASE = "FIRST_PURCHASE"
 const GOAL_REACHED = "GOAL_REACHED"
@@ -32,7 +33,7 @@ export class RulesEngineService {
             throw new Error("Compra não encontrada");
         }
 
-        const periodKey = await this.getPeriodKey(purchase.purchasedAt);
+        const periodKey = getPeriodKey(purchase.purchasedAt);
         logPipeline("rules.period_resolved", { purchaseId: purchase.id, playerId: purchase.playerId, periodKey });
 
         await prisma.$transaction(async (tx) => {
@@ -121,22 +122,4 @@ export class RulesEngineService {
         return cycle
     }
 
-    private getPeriodKey(date: Date) {
-        const parts = new Intl.DateTimeFormat("en-US", {
-            timeZone: "America/Sao_Paulo",
-            year: "numeric",
-            month: "2-digit"
-        }).formatToParts(date);
-
-        const year = parts.find(p => p.type === "year")?.value;
-        const month = parts.find(p => p.type === "month")?.value;
-
-        if (!year || !month) {
-            throw new Error(`Não foi possível calcular o período de ${date.toISOString()}`);
-        }
-
-        const periodKey = `${year}-${month}`;
-
-        return periodKey;
-    }
 }

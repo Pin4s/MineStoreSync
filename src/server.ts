@@ -5,15 +5,18 @@ import { getRconConfig } from "./lib/rcon"
 import { logPipeline } from "./lib/pipeline-log"
 import { WebhookEventsWorker } from "./workers/webhook-events.worker"
 import { CommandExecutionsWorker } from "./workers/command-executions.worker"
+import { TopBuyerWorker } from "./workers/top-buyer.worker"
 
 const port = env.PORT
 const worker = new WebhookEventsWorker()
+const topBuyerWorker = new TopBuyerWorker()
 
 const rconConfig = getRconConfig()
 const commandWorker = rconConfig ? new CommandExecutionsWorker(rconConfig) : null
 
 app.addHook("onClose", async () => {
     worker.stop();
+    topBuyerWorker.stop();
     commandWorker?.stop();
 });
 
@@ -46,6 +49,7 @@ async function bootstrap() {
 
     console.info(`Server is running on port ${port}`)
     worker.start()
+    topBuyerWorker.start()
 
     if (commandWorker) {
         commandWorker.start()

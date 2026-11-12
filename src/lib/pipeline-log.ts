@@ -29,6 +29,12 @@ const messages: Record<string, string> = {
     "goal.progress": "Progresso da meta coletiva",
     "goal.reached": "Meta coletiva atingida. Espera de 1h iniciada",
     "goal.purchase_ignored": "Compra não conta para a meta coletiva",
+    "top_buyer.worker_started": "Verificação do maior comprador iniciada (a cada 1 min)",
+    "top_buyer.worker_stopped": "Verificação do maior comprador parada",
+    "top_buyer.check_failed": "Falha na verificação do maior comprador",
+    "top_buyer.deferred": "Fechamento do mês adiado: há webhooks pendentes na fila",
+    "top_buyer.empty": "Mês sem compras: nenhum maior comprador para premiar",
+    "top_buyer.closed": "Mês fechado. Maior comprador premiado",
     "trigger.saved": "Gatilho criado",
     "commands.templates_loaded": "Modelos de comando encontrados",
     "commands.execution_saved": "Comando colocado na fila",
@@ -68,6 +74,8 @@ const labels: Record<string, string> = {
     targetCents: "meta (centavos)",
     startedAt: "início",
     cooldownUntil: "espera até",
+    pendingCount: "webhooks pendentes",
+    nickname: "nick",
     reason: "motivo"
 };
 
@@ -88,7 +96,8 @@ const warnings = new Set([
     "trigger.duplicate_found",
     "commands.rcon_disabled",
     "command.retry_scheduled",
-    "command.needs_action"
+    "command.needs_action",
+    "top_buyer.deferred"
 ]);
 
 const successes = new Set([
@@ -98,7 +107,8 @@ const successes = new Set([
     "trigger.saved",
     "commands.queued",
     "command.sent",
-    "goal.reached"
+    "goal.reached",
+    "top_buyer.closed"
 ]);
 
 function formatContext(context: PipelineContext): string {
