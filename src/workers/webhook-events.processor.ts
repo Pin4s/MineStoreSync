@@ -4,43 +4,36 @@ import { webhookSchema } from "../modules/webhooks/webhooks.schema";
 import { findWebhookEvents, MAX_ATTEMPTS, registerWebhookFailure, updateWebhookStatus } from "../modules/webhooks/webhooks.service";
 import { Status } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
+import { RulesEngineService } from "../modules/rules/rulesEngine.service";
+import { logPipeline, logPipelineError } from "../lib/pipeline-log";
 
 const workerLogPrefix = "[WebhookEventsWorker]"
 
 export async function processorWebhookEvent() {
-    console.info(`${workerLogPrefix} Searching for a received webhook event`)
+
+    const rulesEngineService = new RulesEngineService()
+
     const webhookEvent = await findWebhookEvents()
-
-    if (!webhookEvent) {
-        console.info(`${workerLogPrefix} No received webhook events found`)
-        return false
-    }
-
-    console.info(
-        `${workerLogPrefix} Processing event ${webhookEvent.id} (${webhookEvent.eventType})`
-    )
+    if (!webhookEvent) return false
+    logPipeline("webhook.selected", { webhookEventId: webhookEvent.id, externalId: webhookEvent.externalId, attempt: webhookEvent.attempts + 1 });
 
     try {
-        
-        console.info(`${workerLogPrefix} Validating event ${webhookEvent.id}`)
+
         const webhook = webhookSchema.parse(webhookEvent.payload)
+        logPipeline("webhook.payload_parsed", { webhookEventId: webhookEvent.id });
 
         const nickname = webhook.data.client_identifier.trim()
 
         if (!isValidNickname(nickname)) {
             await updateWebhookStatus(Status.FAILED, webhookEvent.id, `Invalid nickname: ${nickname}`)
+            logPipeline("webhook.failed_status_saved", { webhookEventId: webhookEvent.id, reason: "invalid_nickname" });
             return true
         }
 
-        await prisma.$transaction(async (tx) => {
-            console.info(`${workerLogPrefix} Resolving player for event ${webhookEvent.id}`)
+        const purchase = await prisma.$transaction(async (tx) => {
             const player = await findOrCreatePlayerByNickname(webhook.data.client_identifier, tx)
+            logPipeline("player.resolved", { webhookEventId: webhookEvent.id, playerId: player.id });
 
-            console.info(
-                `${workerLogPrefix} Player ${player.id} resolved for event ${webhookEvent.id}`
-            )
-
-            console.info(`${workerLogPrefix} Creating purchase for event ${webhookEvent.id}`)
             const purchase = await createPurchase({
                 playerId: player.id,
                 webhookEventId: webhookEvent.id,
@@ -49,27 +42,26 @@ export async function processorWebhookEvent() {
                 purchasedAt: new Date(webhook.data.paid_at ?? webhook.date)
             }, tx)
 
-            console.info(
-                `${workerLogPrefix} Purchase ${purchase.id} created or found for event ${webhookEvent.id}`
-            )
-            console.info(`${workerLogPrefix} Marking event ${webhookEvent.id} as processed`)
-            await updateWebhookStatus(Status.PROCESSED, webhookEvent.id, undefined, tx)
+            logPipeline("purchase.saved", { webhookEventId: webhookEvent.id, playerId: player.id, purchaseId: purchase.id });
+            return purchase
         })
-        console.info(`${workerLogPrefix} Event ${webhookEvent.id} processed successfully`)
 
+        await rulesEngineService.processPurchase(purchase.id)
+        logPipeline("rules.completed", { webhookEventId: webhookEvent.id, purchaseId: purchase.id });
+
+        await updateWebhookStatus(Status.PROCESSED, webhookEvent.id)
+        logPipeline("webhook.processed", { webhookEventId: webhookEvent.id, purchaseId: purchase.id });
 
     } catch (error) {
         const message = error instanceof Error
             ? error.message
             : String(error)
 
-        console.error(`${workerLogPrefix} Event ${webhookEvent.id} processing:`, error)
+        logPipelineError("webhook.processing_failed", error, { webhookEventId: webhookEvent.id });
         const failedEvent = await registerWebhookFailure(webhookEvent, message)
 
         if (failedEvent.status === Status.FAILED) {
-            console.info(
-                `${workerLogPrefix} Event ${webhookEvent.id} attempt ${failedEvent.attempts}/${MAX_ATTEMPTS} failed, no more retries`
-            )
+            logPipeline("webhook.failed_status_saved", { webhookEventId: webhookEvent.id, attempt: failedEvent.attempts });
         } else {
             console.info(
                 `${workerLogPrefix} Event ${webhookEvent.id} attempt ${failedEvent.attempts}/${MAX_ATTEMPTS} failed, next attempt at ${failedEvent.nextAttemptAt.toISOString()}`
