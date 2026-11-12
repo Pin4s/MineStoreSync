@@ -50,7 +50,7 @@ export async function updateWebhookStatus(status: Status, webhookEventId: string
         where: { id: webhookEventId },
         data: {
             status: status,
-            lastError: message,
+            lastError: status === Status.PROCESSED ? null : message,
             processedAt: status === Status.PROCESSED ? new Date() : null
         }
     })
