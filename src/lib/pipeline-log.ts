@@ -24,7 +24,11 @@ const messages: Record<string, string> = {
     "rules.period_resolved": "Período da regra definido",
     "rules.commands_ready": "Regras concluídas. Comandos preparados",
     "rules.completed": "Etapa de regras finalizada",
-    "trigger.duplicate_found": "Gatilho já existe para este jogador e período",
+    "trigger.duplicate_found": "Gatilho já disparado para este alvo e período",
+    "goal.cycle_created": "Novo ciclo da meta coletiva iniciado",
+    "goal.progress": "Progresso da meta coletiva",
+    "goal.reached": "Meta coletiva atingida. Espera de 1h iniciada",
+    "goal.purchase_ignored": "Compra não conta para a meta coletiva",
     "trigger.saved": "Gatilho criado",
     "commands.templates_loaded": "Modelos de comando encontrados",
     "commands.execution_saved": "Comando colocado na fila",
@@ -59,12 +63,19 @@ const labels: Record<string, string> = {
     count: "quantidade",
     nextAttemptAt: "próxima tentativa",
     maxAttempts: "máximo de tentativas",
+    goalCycleId: "ciclo",
+    totalCents: "total (centavos)",
+    targetCents: "meta (centavos)",
+    startedAt: "início",
+    cooldownUntil: "espera até",
     reason: "motivo"
 };
 
 const reasons: Record<string, string> = {
     invalid_headers: "cabeçalhos ausentes ou inválidos",
-    mismatch: "assinatura não confere"
+    mismatch: "assinatura não confere",
+    cooldown: "compra durante a espera de 1h após a meta",
+    outside_cycle: "compra anterior ao ciclo atual"
 };
 
 const warnings = new Set([
@@ -86,7 +97,8 @@ const successes = new Set([
     "purchase.saved",
     "trigger.saved",
     "commands.queued",
-    "command.sent"
+    "command.sent",
+    "goal.reached"
 ]);
 
 function formatContext(context: PipelineContext): string {

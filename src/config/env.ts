@@ -9,6 +9,7 @@ const envSchema = z.object({
     CENTRALCART_WEBHOOK_SECRET: requiredValue,
     ENVIRONMENT: requiredValue,
     PORT: port.default(3333),
+    GOAL_TARGET_CENTS: z.coerce.number().int().positive(),
     RCON_HOST: requiredValue.optional(),
     RCON_PORT: port.optional(),
     RCON_PASSWORD: requiredValue.optional(),

@@ -1,7 +1,18 @@
 import { prisma } from "../../lib/prisma";
+import { env } from "../../config/env";
+import { Prisma } from "../../generated/prisma/client";
 import { TriggerCommandsService } from "../triggersCommands/triggersCommands.service";
 import { TriggersExecutionsService } from "../triggersExecutions/triggersExecutions.service";
+import { createGoalCycle, findFirstPurchaseDate, GoalCycle, lockCurrentGoalCycle, markGoalCycleReached, sumGoalCycle } from "../goalCycles/goalCycles.service";
 import { logPipeline } from "../../lib/pipeline-log";
+
+const FIRST_PURCHASE = "FIRST_PURCHASE"
+const GOAL_REACHED = "GOAL_REACHED"
+
+interface GoalPurchase {
+    id: string
+    purchasedAt: Date
+}
 
 export class RulesEngineService {
 
@@ -26,6 +37,8 @@ export class RulesEngineService {
 
         await prisma.$transaction(async (tx) => {
             const triggerExecution = await triggersExecutionsService.saveTriggerExecution({
+                triggerKey: FIRST_PURCHASE,
+                dedupeKey: `${FIRST_PURCHASE}:${purchase.playerId}:${periodKey}`,
                 playerId: purchase.playerId,
                 periodKey,
                 purchaseId: purchase.id
@@ -41,8 +54,71 @@ export class RulesEngineService {
             }
         });
 
+        await this.evaluateGoal(purchase);
+
         return purchase;
 
+    }
+
+    // Rule 2: the cycle stays locked from evaluation until the trigger and its commands are saved.
+    private async evaluateGoal(purchase: GoalPurchase) {
+        await prisma.$transaction(async (tx) => {
+            const cycle = await this.resolveGoalCycle(purchase, tx)
+            if (!cycle) return
+
+            const totalCents = await sumGoalCycle(cycle, tx)
+            logPipeline("goal.progress", { purchaseId: purchase.id, goalCycleId: cycle.id, totalCents, targetCents: cycle.target_cents });
+
+            if (totalCents < cycle.target_cents) return
+
+            const reached = await markGoalCycleReached(cycle.id, purchase.purchasedAt, tx)
+            logPipeline("goal.reached", { purchaseId: purchase.id, goalCycleId: cycle.id, totalCents, cooldownUntil: reached.cooldownUntil?.toISOString() ?? null });
+
+            const triggerExecution = await new TriggersExecutionsService().saveTriggerExecution({
+                triggerKey: GOAL_REACHED,
+                dedupeKey: `${GOAL_REACHED}:${cycle.id}`,
+                periodKey: cycle.id,
+                playerId: null,
+                purchaseId: purchase.id
+            }, tx);
+
+            if (triggerExecution) {
+                const commandCount = await new TriggerCommandsService().generateCommandExecutions(GOAL_REACHED, triggerExecution.id, null, tx)
+                logPipeline("rules.commands_ready", { purchaseId: purchase.id, triggerExecutionId: triggerExecution.id, commandCount });
+            }
+        });
+    }
+
+    // Returns the cycle this purchase counts for, or undefined when it counts for none.
+    private async resolveGoalCycle(purchase: GoalPurchase, tx: Prisma.TransactionClient): Promise<GoalCycle | undefined> {
+        const current = await lockCurrentGoalCycle(tx)
+
+        if (!current) {
+            const startedAt = await findFirstPurchaseDate(tx) ?? purchase.purchasedAt
+            return this.startGoalCycle(startedAt, purchase.id, tx)
+        }
+
+        if (current.cooldown_until === null) {
+            if (purchase.purchasedAt < current.started_at) {
+                logPipeline("goal.purchase_ignored", { purchaseId: purchase.id, goalCycleId: current.id, reason: "outside_cycle" });
+                return
+            }
+            return current
+        }
+
+        if (purchase.purchasedAt < current.cooldown_until) {
+            const reason = current.reached_at !== null && purchase.purchasedAt >= current.reached_at ? "cooldown" : "outside_cycle"
+            logPipeline("goal.purchase_ignored", { purchaseId: purchase.id, goalCycleId: current.id, reason });
+            return
+        }
+
+        return this.startGoalCycle(current.cooldown_until, purchase.id, tx)
+    }
+
+    private async startGoalCycle(startedAt: Date, purchaseId: string, tx: Prisma.TransactionClient) {
+        const cycle = await createGoalCycle(startedAt, env.GOAL_TARGET_CENTS, tx)
+        logPipeline("goal.cycle_created", { purchaseId, goalCycleId: cycle.id, startedAt: startedAt.toISOString(), targetCents: cycle.target_cents });
+        return cycle
     }
 
     private getPeriodKey(date: Date) {
@@ -52,8 +128,12 @@ export class RulesEngineService {
             month: "2-digit"
         }).formatToParts(date);
 
-        const year = parts.find(p => p.type === "year")!.value;
-        const month = parts.find(p => p.type === "month")!.value;
+        const year = parts.find(p => p.type === "year")?.value;
+        const month = parts.find(p => p.type === "month")?.value;
+
+        if (!year || !month) {
+            throw new Error(`Não foi possível calcular o período de ${date.toISOString()}`);
+        }
 
         const periodKey = `${year}-${month}`;
 

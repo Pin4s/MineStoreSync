@@ -3,7 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { logPipeline } from "../../lib/pipeline-log";
 
 export class TriggerCommandsService {
-    async generateCommandExecutions(triggerKey: string, triggerExecutionId: string, playerNickname: string, db: Prisma.TransactionClient = prisma) {
+    async generateCommandExecutions(triggerKey: string, triggerExecutionId: string, playerNickname: string | null, db: Prisma.TransactionClient = prisma) {
 
         const commands = await db.triggerCommands.findMany({
             where: {
@@ -20,7 +20,9 @@ export class TriggerCommandsService {
                 data: {
                     triggerExecutionId,
                     sortOrder: command.sortOrder,
-                    command: command.command.replaceAll("{player}", playerNickname),
+                    command: playerNickname === null
+                        ? command.command
+                        : command.command.replaceAll("{player}", playerNickname),
                     status: "PENDING",
                 }
             });

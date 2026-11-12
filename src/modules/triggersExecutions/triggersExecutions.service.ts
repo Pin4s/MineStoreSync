@@ -3,19 +3,19 @@ import { prisma } from "../../lib/prisma";
 import { logPipeline } from "../../lib/pipeline-log";
 
 export interface TriggerExecutionSchema {
-    playerId: string;
+    triggerKey: string;
+    dedupeKey: string;
     periodKey: string;
+    playerId: string | null;
     purchaseId: string;
 }
 
 export class TriggersExecutionsService {
-    async saveTriggerExecution({ playerId, periodKey, purchaseId }: TriggerExecutionSchema, db: Prisma.TransactionClient = prisma) {
-        const dedupeKey = `FIRST_PURCHASE:${playerId}:${periodKey}`;
-
+    async saveTriggerExecution({ triggerKey, dedupeKey, periodKey, playerId, purchaseId }: TriggerExecutionSchema, db: Prisma.TransactionClient = prisma) {
         try {
             const triggerExecutions = await db.triggerExecutions.create({
                 data: {
-                    triggerKey: "FIRST_PURCHASE",
+                    triggerKey,
                     playerId,
                     purchaseId,
                     periodKey,
@@ -23,11 +23,11 @@ export class TriggersExecutionsService {
                 }
             })
 
-            logPipeline("trigger.saved", { purchaseId, playerId, periodKey, triggerExecutionId: triggerExecutions.id });
+            logPipeline("trigger.saved", { triggerKey, purchaseId, playerId, periodKey, triggerExecutionId: triggerExecutions.id });
             return triggerExecutions
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-                logPipeline("trigger.duplicate_found", { purchaseId, playerId, periodKey });
+                logPipeline("trigger.duplicate_found", { triggerKey, purchaseId, playerId, periodKey });
                 return;
             }
 
