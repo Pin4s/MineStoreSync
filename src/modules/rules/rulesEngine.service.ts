@@ -23,20 +23,22 @@ export class RulesEngineService {
         const periodKey = await this.getPeriodKey(purchase.purchasedAt);
         logPipeline("rules.period_resolved", { purchaseId: purchase.id, playerId: purchase.playerId, periodKey });
 
-        const triggerExecution = await triggersExecutionsService.saveTriggerExecution({
-            playerId: purchase.playerId,
-            periodKey,
-            purchaseId: purchase.id
+        await prisma.$transaction(async (tx) => {
+            const triggerExecution = await triggersExecutionsService.saveTriggerExecution({
+                playerId: purchase.playerId,
+                periodKey,
+                purchaseId: purchase.id
+            }, tx);
+
+            if (triggerExecution) {
+                const { triggerKey, id } = triggerExecution;
+
+                const triggerCommandsService = new TriggerCommandsService()
+
+                const commandCount = await triggerCommandsService.generateCommandExecutions(triggerKey, id, tx)
+                logPipeline("rules.commands_ready", { purchaseId: purchase.id, triggerExecutionId: id, commandCount });
+            }
         });
-
-        if (triggerExecution) {
-            const { triggerKey, id } = triggerExecution;
-
-            const triggerCommandsService = new TriggerCommandsService()
-
-            const commandCount = await triggerCommandsService.generateCommandExecutions(triggerKey, id)
-            logPipeline("rules.commands_ready", { purchaseId: purchase.id, triggerExecutionId: id, commandCount });
-        }
 
         return purchase;
 

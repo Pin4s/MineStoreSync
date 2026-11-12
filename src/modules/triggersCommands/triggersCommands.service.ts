@@ -1,10 +1,11 @@
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 import { logPipeline } from "../../lib/pipeline-log";
 
 export class TriggerCommandsService {
-    async generateCommandExecutions(triggerKey: string, triggerExecutionId: string) {
+    async generateCommandExecutions(triggerKey: string, triggerExecutionId: string, db: Prisma.TransactionClient = prisma) {
 
-        const commands = await prisma.triggerCommands.findMany({
+        const commands = await db.triggerCommands.findMany({
             where: {
                 triggerKey,
             }, orderBy: {
@@ -15,7 +16,7 @@ export class TriggerCommandsService {
         logPipeline("commands.templates_loaded", { triggerExecutionId, triggerKey, count: commands.length });
 
         for (const command of commands) {
-            const execution = await prisma.commandsExecutions.create({
+            const execution = await db.commandsExecutions.create({
                 data: {
                     triggerExecutionId,
                     sortOrder: command.sortOrder,
