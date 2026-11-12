@@ -1,4 +1,4 @@
-import { findOrCreatePlayerByNickname } from "../modules/players/players.service";
+import { findOrCreatePlayerByNickname, isValidNickname } from "../modules/players/players.service";
 import { createPurchase } from "../modules/purchases/purchase.service";
 import { webhookSchema } from "../modules/webhooks/webhooks.schema";
 import { findWebhookEvents, MAX_ATTEMPTS, registerWebhookFailure, updateWebhookStatus } from "../modules/webhooks/webhooks.service";
@@ -21,9 +21,16 @@ export async function processorWebhookEvent() {
     )
 
     try {
+        
         console.info(`${workerLogPrefix} Validating event ${webhookEvent.id}`)
         const webhook = webhookSchema.parse(webhookEvent.payload)
 
+        const nickname = webhook.data.client_identifier.trim()
+
+        if (!isValidNickname(nickname)) {
+            await updateWebhookStatus(Status.FAILED, webhookEvent.id, `Invalid nickname: ${nickname}`)
+            return true
+        }
 
         await prisma.$transaction(async (tx) => {
             console.info(`${workerLogPrefix} Resolving player for event ${webhookEvent.id}`)
