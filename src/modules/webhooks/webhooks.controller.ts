@@ -1,9 +1,22 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import z from "zod";
 import { env } from "../../config/env";
 import { webhookSchema } from "./webhooks.schema";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { verifyWebhookSignature } from "./webhooks.signature";
 import { saveWebhook } from "./webhooks.service";
 import { logPipeline, logPipelineError } from "../../lib/pipeline-log";
+
+const rawBodySchema = z.instanceof(Buffer)
+const jsonObjectSchema = z.record(z.string(), z.json())
+const eventTypeSchema = z.object({ event: z.unknown() })
+
+function parseJsonObject(rawBody: Buffer) {
+    try {
+        return jsonObjectSchema.safeParse(JSON.parse(rawBody.toString("utf8")))
+    } catch {
+        return undefined
+    }
+}
 
 export async function receiveWebhook(
     request: FastifyRequest,
@@ -12,50 +25,44 @@ export async function receiveWebhook(
 
     logPipeline("webhook.received", { requestId: request.id });
 
-    if (env.ENVIRONMENT !== "dev") {
+    const rawBody = rawBodySchema.safeParse(request.body)
 
-        const secret = env.CENTRALCART_WEBHOOK_SECRET
+    if (!rawBody.success) {
+        logPipeline("webhook.payload_rejected", { requestId: request.id, reason: "missing_body" });
+        return reply.code(400).send({
+            message: "Bad Request"
+        });
+    }
 
-        if (!secret) {
-            logPipeline("webhook.signature_unavailable", { requestId: request.id });
-            return reply.code(500).send({
-                message: "Webhook secret not configured"
-            });
-        }
+    if (env.ENVIRONMENT === "dev") {
+        logPipeline("webhook.signature_bypassed", { requestId: request.id });
+    } else {
+        const check = verifyWebhookSignature({
+            headers: request.headers,
+            rawBody: rawBody.data,
+            secret: env.CENTRALCART_WEBHOOK_SECRET,
+            now: new Date(),
+        })
 
-        const signature = request.headers["x-centralcart-signature"];
-        const timestamp = request.headers["x-centralcart-timestamp"];
-
-        const expected = createHmac("sha256", secret)
-            .update(`${timestamp}.${JSON.stringify(request.body)}`)
-            .digest("hex");
-
-        if (
-            typeof signature !== "string" ||
-            !/^[a-f0-9]{64}$/i.test(signature) ||
-            typeof timestamp !== "string" ||
-            !/^\d+$/.test(timestamp)
-        ) {
-            logPipeline("webhook.signature_rejected", { requestId: request.id, reason: "invalid_headers" });
-            return reply.code(401).send({
-                message: "Invalid signature"
-            });
-        }
-
-        const isValid = timingSafeEqual(
-            Buffer.from(signature, "hex"),
-            Buffer.from(expected, "hex")
-        );
-
-        if (!isValid) {
-            logPipeline("webhook.signature_rejected", { requestId: request.id, reason: "mismatch" });
+        if (check !== "valid") {
+            logPipeline("webhook.signature_rejected", { requestId: request.id, reason: check });
             return reply.code(401).send({
                 message: "Invalid signature"
             });
         }
     }
 
-    const event = (request.body as { event?: unknown } | undefined)?.event
+    const body = parseJsonObject(rawBody.data)
+
+    if (!body?.success) {
+        logPipeline("webhook.payload_rejected", { requestId: request.id, reason: "invalid_json" });
+        return reply.code(400).send({
+            message: "Bad Request"
+        });
+    }
+
+    const eventType = eventTypeSchema.safeParse(body.data)
+    const event = eventType.success ? eventType.data.event : undefined
 
     if (event !== "ORDER_APPROVED") {
         console.info(`[Webhook] Ignored event ${String(event)}`)
@@ -64,7 +71,7 @@ export async function receiveWebhook(
         });
     }
 
-    const payload = webhookSchema.safeParse(request.body)
+    const payload = webhookSchema.safeParse(body.data)
 
     if (!payload.success) {
         logPipeline("webhook.payload_rejected", { requestId: request.id, issues: payload.error.issues.length });
@@ -74,11 +81,11 @@ export async function receiveWebhook(
         });
     }
 
-    const { id: externalId, event: eventType } = payload.data
-    logPipeline("webhook.validated", { requestId: request.id, externalId, eventType });
+    const { id: externalId } = payload.data
+    logPipeline("webhook.validated", { requestId: request.id, externalId, eventType: event });
 
     try {
-        const saved = await saveWebhook({ externalId, eventType, payload: request.body as object })
+        const saved = await saveWebhook({ externalId, eventType: event, payload: body.data })
         logPipeline("webhook.saved", { requestId: request.id, webhookEventId: saved.id, externalId });
         return reply.code(200).send({
             message: "Webhook received",

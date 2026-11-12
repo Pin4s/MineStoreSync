@@ -5,7 +5,7 @@ const messages: Record<string, string> = {
     "worker.stopped": "Worker parado",
     "worker.poll_failed": "Worker falhou ao buscar ou processar um webhook",
     "webhook.received": "Webhook recebido",
-    "webhook.signature_unavailable": "Webhook parado: segredo de assinatura não configurado",
+    "webhook.signature_bypassed": "ATENÇÃO: assinatura NÃO verificada porque ENVIRONMENT=dev. Nunca use dev em produção",
     "webhook.signature_rejected": "Webhook recusado: assinatura inválida",
     "webhook.payload_rejected": "Webhook recusado: dados inválidos",
     "webhook.validated": "Webhook validado",
@@ -82,12 +82,15 @@ const labels: Record<string, string> = {
 const reasons: Record<string, string> = {
     invalid_headers: "cabeçalhos ausentes ou inválidos",
     mismatch: "assinatura não confere",
+    expired: "timestamp fora da janela de 5 minutos",
+    missing_body: "corpo da requisição ausente",
+    invalid_json: "corpo não é um objeto JSON válido",
     cooldown: "compra durante a espera de 1h após a meta",
     outside_cycle: "compra anterior ao ciclo atual"
 };
 
 const warnings = new Set([
-    "webhook.signature_unavailable",
+    "webhook.signature_bypassed",
     "webhook.signature_rejected",
     "webhook.payload_rejected",
     "webhook.duplicate",
